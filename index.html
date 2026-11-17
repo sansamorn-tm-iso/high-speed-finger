@@ -3,22 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>High Speed Finger - เกมนิ้วไวท้าดวล</title>
+  <title>High Speed Finger - เกมนิ้วไวท้าดวล (Rainbow Edition)</title>
   <!-- Google Fonts: Kanit สำหรับภาษาไทยที่อ่านง่ายและทันสมัย -->
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;800&display=swap" rel="stylesheet">
-  <!-- MQTT over WebSocket สำหรับซิงค์คะแนนผู้เล่นหลายเครื่องเข้าหน้าแอดมินแบบเรียลไทม์ 100% -->
+  <!-- MQTT over WebSocket สำหรับซิงค์คำสั่งเริ่มเกมและคะแนนผู้เล่นหลายเครื่องเข้าหน้าแอดมินแบบเรียลไทม์ -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <!-- GunDB สำรองเพิ่มเติม -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
     :root {
-      --bg-gradient: linear-gradient(135deg, #FFDEE9 0%, #B5FFFC 100%);
-      --card-bg: rgba(255, 255, 255, 0.92);
-      --primary: #FF5722;
-      --secondary: #2196F3;
-      --text-dark: #1E293B;
+      --rainbow-gradient: linear-gradient(135deg, #FF007F, #FF7F00, #FFFF00, #00FF7F, #00BFFF, #8B00FF);
+      --rainbow-soft: linear-gradient(120deg, #FF6EC7 0%, #FFCC33 25%, #4ADE80 50%, #38BDF8 75%, #A855F7 100%);
+      --card-bg: rgba(255, 255, 255, 0.94);
+      --text-dark: #1E1B4B;
       --text-muted: #64748B;
-      --gold-top: #FFE066;
+      --gold-top: #FFF380;
       --gold-mid: #FFD700;
       --gold-bot: #F59E0B;
       --gold-edge: #B45309;
@@ -36,7 +35,9 @@
     }
 
     body {
-      background: var(--bg-gradient);
+      background: var(--rainbow-soft);
+      background-size: 300% 300%;
+      animation: rainbowBg 12s ease infinite;
       min-height: 100vh;
       display: flex;
       justify-content: center;
@@ -46,16 +47,39 @@
       overflow-x: hidden;
     }
 
+    @keyframes rainbowBg {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
     .app-container {
       width: 100%;
-      max-width: 420px;
+      max-width: 430px;
       background: var(--card-bg);
-      border-radius: 28px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-      padding: 24px 20px;
+      border-radius: 30px;
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.2), 0 0 0 5px rgba(255, 255, 255, 0.85);
+      padding: 24px 22px;
       position: relative;
       overflow: hidden;
-      border: 3px solid #FFFFFF;
+      transition: max-width 0.35s ease, padding 0.35s ease;
+    }
+
+    /* แถบสีรุ้งด้านบนการ์ด */
+    .app-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background: var(--rainbow-gradient);
+    }
+
+    /* ขยายหน้าจอแอดมินให้ใหญ่เต็มตาสำหรับหน้าจอคอมพิวเตอร์ / โปรเจกเตอร์ */
+    .app-container.admin-wide {
+      max-width: 1240px;
+      padding: 36px 42px;
     }
 
     /* แถบด้านบน */
@@ -63,26 +87,27 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
+      margin-top: 4px;
     }
 
     .badge {
-      background: #FEF3C7;
-      color: #D97706;
-      font-weight: 600;
-      font-size: 0.85rem;
-      padding: 6px 12px;
+      background: linear-gradient(90deg, #FF007F, #FF7F00, #F59E0B);
+      color: #FFFFFF;
+      font-weight: 800;
+      font-size: 0.9rem;
+      padding: 6px 14px;
       border-radius: 999px;
-      border: 1px solid #FDE68A;
+      box-shadow: 0 3px 10px rgba(255, 0, 127, 0.3);
     }
 
     .sound-btn {
-      background: #F1F5F9;
-      border: none;
+      background: linear-gradient(135deg, #E0E7FF, #F3E8FF);
+      border: 2px solid #C084FC;
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      font-size: 1.2rem;
+      width: 44px;
+      height: 44px;
+      font-size: 1.25rem;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -97,20 +122,20 @@
     /* แถบสลับโหมด ผู้เล่น / แอดมิน */
     .mode-tabs {
       display: flex;
-      gap: 8px;
-      margin-bottom: 14px;
+      gap: 10px;
+      margin-bottom: 16px;
       background: #F1F5F9;
-      padding: 5px;
-      border-radius: 14px;
+      padding: 6px;
+      border-radius: 16px;
     }
 
     .mode-tab {
       flex: 1;
-      padding: 8px 10px;
+      padding: 10px 14px;
       border: none;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 0.9rem;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 0.95rem;
       cursor: pointer;
       background: transparent;
       color: var(--text-muted);
@@ -118,84 +143,18 @@
     }
 
     .mode-tab.active {
-      background: #FFFFFF;
-      color: var(--text-dark);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    }
-
-    .room-badge {
-      display: inline-block;
-      background: #EFF6FF;
-      color: #1D4ED8;
-      border: 1px solid #BFDBFE;
-      font-size: 0.8rem;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 999px;
-      margin-top: 6px;
-    }
-
-    .qr-box {
-      text-align: center;
-      background: #FFFFFF;
-      border: 2px dashed #CBD5E1;
-      border-radius: 18px;
-      padding: 14px;
-      margin-bottom: 14px;
-    }
-
-    .qr-box img {
-      width: 170px;
-      height: 170px;
-      border-radius: 10px;
-      margin: 8px auto;
-      display: block;
-    }
-
-    .room-input-row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .room-input {
-      flex: 1;
-      padding: 10px 12px;
-      border: 2px solid #CBD5E1;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 0.95rem;
-      text-align: center;
-      user-select: text;
-      -webkit-user-select: text;
-    }
-
-    .btn-secondary {
-      padding: 10px 14px;
-      background: #3B82F6;
+      background: linear-gradient(90deg, #EC4899, #8B5CF6, #3B82F6);
       color: #FFFFFF;
-      border: none;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .status-playing {
-      font-size: 0.75rem;
-      background: #DCFCE7;
-      color: #15803D;
-      padding: 2px 8px;
-      border-radius: 999px;
-      margin-left: 6px;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
     }
 
     .sync-status {
       display: inline-block;
-      font-size: 0.78rem;
+      font-size: 0.82rem;
       font-weight: 600;
-      padding: 3px 10px;
+      padding: 4px 12px;
       border-radius: 999px;
-      margin-top: 4px;
+      margin-top: 6px;
       background: #FEF3C7;
       color: #B45309;
     }
@@ -205,25 +164,31 @@
       color: #15803D;
     }
 
-    /* หัวข้อเกม */
+    /* หัวข้อเกมสีรุ้งสดใส */
     .game-header {
       text-align: center;
       margin-bottom: 20px;
     }
 
     .game-title {
-      font-size: 2rem;
+      font-size: 2.2rem;
       font-weight: 800;
       line-height: 1.1;
-      background: linear-gradient(90deg, #FF512F, #F09819);
+      background: linear-gradient(90deg, #FF0055, #FF7700, #FFBB00, #00C853, #00B0FF, #7C4DFF);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       margin-bottom: 4px;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+    }
+
+    .app-container.admin-wide .game-title {
+      font-size: 3rem;
     }
 
     .game-subtitle {
-      font-size: 1rem;
-      color: var(--text-muted);
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #475569;
     }
 
     /* หน้าจอแต่ละสถานะ */
@@ -248,48 +213,95 @@
 
     .input-label {
       display: block;
-      font-size: 1.05rem;
-      font-weight: 600;
-      margin-bottom: 8px;
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 10px;
       color: var(--text-dark);
+      text-align: center;
     }
 
     .name-input {
       width: 100%;
-      padding: 14px 16px;
-      font-size: 1.15rem;
-      border: 2px solid #CBD5E1;
-      border-radius: 16px;
+      padding: 15px 16px;
+      font-size: 1.2rem;
+      border: 3px solid #C084FC;
+      border-radius: 18px;
       outline: none;
       transition: border-color 0.2s, box-shadow 0.2s;
       text-align: center;
-      font-weight: 600;
+      font-weight: 800;
+      color: #1E1B4B;
+      background: #FAF5FF;
       user-select: text;
       -webkit-user-select: text;
     }
 
     .name-input:focus {
-      border-color: #F59E0B;
-      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+      border-color: #EC4899;
+      box-shadow: 0 0 0 5px rgba(236, 72, 153, 0.25);
+      background: #FFFFFF;
     }
 
+    /* ปุ่มสีรุ้งสดใส */
     .btn-primary {
       width: 100%;
-      padding: 15px;
+      padding: 16px;
       font-size: 1.25rem;
       font-weight: 800;
       color: #FFFFFF;
-      background: linear-gradient(135deg, #10B981, #059669);
+      background: linear-gradient(90deg, #FF007F, #FF7F00, #10B981, #3B82F6, #8B5CF6);
+      background-size: 200% auto;
+      animation: rainbowBtn 4s linear infinite;
       border: none;
-      border-radius: 16px;
-      box-shadow: 0 6px 0 #047857;
+      border-radius: 18px;
+      box-shadow: 0 6px 0 #4C1D95, 0 10px 20px rgba(139, 92, 246, 0.35);
       cursor: pointer;
       transition: transform 0.1s, box-shadow 0.1s;
     }
 
+    @keyframes rainbowBtn {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+
     .btn-primary:active {
       transform: translateY(4px);
-      box-shadow: 0 2px 0 #047857;
+      box-shadow: 0 2px 0 #4C1D95;
+    }
+
+    .btn-secondary {
+      padding: 12px 18px;
+      background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #1E40AF;
+      transition: transform 0.1s;
+    }
+
+    .btn-secondary:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #1E40AF;
+    }
+
+    /* กล่องรอแอดมินเริ่มเกม */
+    .waiting-card {
+      text-align: center;
+      padding: 28px 20px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #FDF4FF, #EFF6FF, #F0FDF4);
+      border: 3px dashed #A855F7;
+      margin-top: 10px;
+    }
+
+    .waiting-pulse {
+      font-size: 3.4rem;
+      display: inline-block;
+      animation: pulse 0.8s infinite alternate;
+      margin-bottom: 10px;
     }
 
     /* หน้าจอขณะเล่น */
@@ -301,21 +313,22 @@
     }
 
     .stat-box {
-      background: #F8FAFC;
-      border: 2px solid #E2E8F0;
-      border-radius: 18px;
-      padding: 10px;
+      background: linear-gradient(135deg, #FFFFFF, #F8FAFC);
+      border: 3px solid #E2E8F0;
+      border-radius: 20px;
+      padding: 12px;
       text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
     }
 
     .stat-label {
       font-size: 0.85rem;
       color: var(--text-muted);
-      font-weight: 600;
+      font-weight: 800;
     }
 
     .stat-value {
-      font-size: 2rem;
+      font-size: 2.1rem;
       font-weight: 800;
       color: var(--text-dark);
       line-height: 1.1;
@@ -328,45 +341,47 @@
 
     @keyframes pulse {
       from { transform: scale(1); }
-      to { transform: scale(1.1); }
+      to { transform: scale(1.12); }
     }
 
     .progress-bar-bg {
       width: 100%;
-      height: 12px;
+      height: 14px;
       background: #E2E8F0;
       border-radius: 999px;
       overflow: hidden;
       margin-bottom: 24px;
+      padding: 2px;
     }
 
     .progress-bar-fill {
       height: 100%;
       width: 100%;
-      background: linear-gradient(90deg, #22C55E, #EAB308, #EF4444);
+      border-radius: 999px;
+      background: var(--rainbow-gradient);
       transition: width 0.1s linear;
     }
 
-    /* ปุ่มสีทองขนาดใหญ่ */
+    /* ปุ่มสีทอง 1 ปุ่ม ขนาดใหญ่ */
     .gold-button-wrapper {
       display: flex;
       justify-content: center;
       align-items: center;
       margin: 20px 0 24px 0;
       position: relative;
-      height: 230px;
+      height: 240px;
     }
 
     .gold-button {
-      width: 210px;
-      height: 210px;
+      width: 220px;
+      height: 220px;
       border-radius: 50%;
-      border: 6px solid #FFFBEB;
+      border: 7px solid #FFFBEB;
       background: radial-gradient(circle at 35% 30%, var(--gold-top), var(--gold-mid) 55%, var(--gold-bot));
       box-shadow:
-        0 14px 0 var(--gold-edge),
-        0 22px 30px rgba(245, 158, 11, 0.45),
-        inset 0 6px 12px rgba(255, 255, 255, 0.8);
+        0 15px 0 var(--gold-edge),
+        0 24px 36px rgba(245, 158, 11, 0.55),
+        inset 0 6px 14px rgba(255, 255, 255, 0.85);
       cursor: pointer;
       display: flex;
       flex-direction: column;
@@ -388,111 +403,259 @@
     }
 
     .gold-btn-icon {
-      font-size: 3rem;
+      font-size: 3.2rem;
       line-height: 1;
       margin-bottom: 4px;
     }
 
     .gold-btn-text {
-      font-size: 1.5rem;
+      font-size: 1.6rem;
       font-weight: 800;
       color: #78350F;
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
     }
 
     .gold-btn-sub {
-      font-size: 0.85rem;
-      font-weight: 600;
+      font-size: 0.9rem;
+      font-weight: 800;
       color: #92400E;
     }
 
     /* เอฟเฟกต์ตัวเลข +1 ลอยขึ้น */
     .floating-plus {
       position: absolute;
-      font-size: 1.6rem;
+      font-size: 1.7rem;
       font-weight: 800;
-      color: #D97706;
-      text-shadow: 0 2px 4px rgba(255, 255, 255, 0.9);
+      color: #FF007F;
+      text-shadow: 0 2px 6px rgba(255, 255, 255, 0.95);
       pointer-events: none;
       animation: floatUp 0.55s ease-out forwards;
     }
 
     @keyframes floatUp {
       0% { opacity: 1; transform: translateY(0) scale(1); }
-      100% { opacity: 0; transform: translateY(-70px) scale(1.3); }
+      100% { opacity: 0; transform: translateY(-75px) scale(1.35); }
     }
 
-    /* ตารางจัดอันดับ (Leaderboard) */
+    /* สรุปผลคะแนนผู้เล่น */
+    .result-box {
+      text-align: center;
+      background: linear-gradient(135deg, #FFFBEB, #FDF4FF, #ECFEFF);
+      border: 3px solid #F472B6;
+      border-radius: 24px;
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+
+    .result-score {
+      font-size: 3.6rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #FF007F, #FF7F00, #8B5CF6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.05;
+      margin: 8px 0;
+    }
+
+    .cps-badge {
+      display: inline-block;
+      background: #FFFFFF;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #9333EA;
+      border: 2px solid #E9D5FF;
+    }
+
+    /* ==========================================
+       เลย์เอาต์หน้าจอแอดมินสำหรับคอมพิวเตอร์ (Widescreen)
+       ========================================== */
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .admin-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .qr-box {
+      text-align: center;
+      background: linear-gradient(180deg, #FFFFFF, #FAF5FF);
+      border: 3px dashed #A855F7;
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(168, 85, 247, 0.12);
+    }
+
+    .qr-box img {
+      width: 250px;
+      height: 250px;
+      border-radius: 16px;
+      margin: 12px auto;
+      display: block;
+      border: 4px solid #FFFFFF;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+    }
+
+    .admin-control-panel {
+      background: linear-gradient(135deg, #FFFFFF, #FDF4FF, #F0F9FF);
+      border-radius: 24px;
+      padding: 24px;
+      border: 3px solid #E9D5FF;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    }
+
+    .admin-status-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: #FFFFFF;
+      padding: 16px 20px;
+      border-radius: 18px;
+      border: 2px solid #F3E8FF;
+      margin-bottom: 18px;
+    }
+
+    .admin-timer-big {
+      font-size: 2.6rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #EC4899, #8B5CF6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .admin-action-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .btn-admin-start {
+      padding: 18px 20px;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      background: linear-gradient(135deg, #10B981, #059669);
+      border: none;
+      border-radius: 18px;
+      box-shadow: 0 6px 0 #047857;
+      cursor: pointer;
+    }
+
+    .btn-admin-reveal {
+      padding: 18px 20px;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      background: linear-gradient(135deg, #F59E0B, #EC4899, #8B5CF6);
+      border: none;
+      border-radius: 18px;
+      box-shadow: 0 6px 0 #6D28D9;
+      cursor: pointer;
+    }
+
+    .btn-admin-cheer {
+      padding: 18px 20px;
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      background: linear-gradient(135deg, #3B82F6, #06B6D4);
+      border: none;
+      border-radius: 18px;
+      box-shadow: 0 6px 0 #0E7490;
+      cursor: pointer;
+    }
+
+    .btn-admin-start:active,
+    .btn-admin-reveal:active,
+    .btn-admin-cheer:active {
+      transform: translateY(4px);
+    }
+
+    /* ตารางจัดอันดับ (แสดงเฉพาะในหน้าแอดมินเมื่อกดโชว์คะแนน) */
     .leaderboard-section {
-      margin-top: 20px;
-      background: #F8FAFC;
-      border-radius: 20px;
-      padding: 16px;
-      border: 2px solid #E2E8F0;
+      background: #FFFFFF;
+      border-radius: 22px;
+      padding: 20px;
+      border: 3px solid #FBCFE8;
     }
 
     .leaderboard-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
     .leaderboard-title {
-      font-size: 1.1rem;
+      font-size: 1.4rem;
       font-weight: 800;
       color: var(--text-dark);
     }
 
     .clear-btn {
-      background: none;
+      background: #FEE2E2;
       border: none;
-      color: #EF4444;
-      font-size: 0.85rem;
-      font-weight: 600;
+      color: #DC2626;
+      font-size: 0.9rem;
+      font-weight: 800;
+      padding: 6px 14px;
+      border-radius: 999px;
       cursor: pointer;
     }
 
     .leaderboard-list {
       list-style: none;
-      max-height: 280px;
+      max-height: 500px;
       overflow-y: auto;
-      padding-right: 4px;
+      padding-right: 6px;
     }
 
     .leaderboard-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 12px;
-      border-radius: 12px;
-      margin-bottom: 8px;
-      background: #FFFFFF;
-      border: 1px solid #E2E8F0;
-      font-weight: 600;
+      padding: 14px 18px;
+      border-radius: 16px;
+      margin-bottom: 10px;
+      background: #F8FAFC;
+      border: 2px solid #E2E8F0;
+      font-weight: 800;
+      font-size: 1.15rem;
+      animation: fadeIn 0.3s ease;
     }
 
-    .leaderboard-item.highlight {
-      background: #FEF3C7;
-      border-color: #F59E0B;
+    .leaderboard-item.rank-top-1 {
+      background: linear-gradient(90deg, #FEF9C3, #FDE047);
+      border-color: #EAB308;
+      transform: scale(1.01);
     }
 
     .rank-badge {
       display: inline-flex;
-      width: 28px;
-      height: 28px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      margin-right: 10px;
-      font-size: 0.9rem;
+      margin-right: 14px;
+      font-size: 1.1rem;
       background: #E2E8F0;
       color: #475569;
     }
 
     .rank-1 { background: #FFD700; color: #78350F; }
-    .rank-2 { background: #E2E8F0; color: #1E293B; }
+    .rank-2 { background: #CBD5E1; color: #1E293B; }
     .rank-3 { background: #FDBA74; color: #7C2D12; }
 
     .player-info {
@@ -505,41 +668,41 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 150px;
+      max-width: 380px;
+      font-size: 1.25rem;
     }
 
     .player-score {
       font-weight: 800;
-      color: #D97706;
-      font-size: 1.05rem;
+      color: #DB2777;
+      font-size: 1.4rem;
     }
 
-    /* สรุปผลคะแนน */
-    .result-box {
-      text-align: center;
-      background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
-      border: 2px solid #FDE68A;
-      border-radius: 20px;
-      padding: 20px;
-      margin-bottom: 18px;
-    }
-
-    .result-score {
-      font-size: 3.4rem;
-      font-weight: 800;
-      color: #D97706;
-      line-height: 1;
-      margin: 8px 0;
-    }
-
-    .cps-badge {
-      display: inline-block;
-      background: #FFFFFF;
-      padding: 4px 12px;
+    .status-playing {
+      font-size: 0.85rem;
+      background: #DCFCE7;
+      color: #15803D;
+      padding: 3px 10px;
       border-radius: 999px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: #B45309;
+      margin-left: 10px;
+    }
+
+    .status-ready {
+      font-size: 0.85rem;
+      background: #E0E7FF;
+      color: #4338CA;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-left: 10px;
+    }
+
+    .hidden-score-placeholder {
+      text-align: center;
+      padding: 42px 20px;
+      background: linear-gradient(135deg, #FAF5FF, #FFF1F2);
+      border-radius: 18px;
+      border: 2px dashed #F472B6;
+      color: #831843;
     }
   </style>
 </head>
@@ -548,45 +711,47 @@
   <div class="app-container">
     <!-- แถบด้านบน -->
     <div class="top-bar">
-      <span class="badge">⏱️ แข่งขัน 1 นาที (60 วินาที)</span>
+      <span class="badge">🌈 แข่งขัน 1 นาที (60 วินาที)</span>
       <button id="soundToggleBtn" class="sound-btn" title="เปิด/ปิดเสียงเพลงและเอฟเฟกต์">🔊</button>
     </div>
 
     <!-- ปุ่มสลับหน้าผู้เล่น กับ หน้าแอดมิน -->
     <div class="mode-tabs">
       <button id="tabPlayerBtn" class="mode-tab active" type="button">🎮 โหมดผู้เข้าแข่งขัน</button>
-      <button id="tabAdminBtn" class="mode-tab" type="button">📊 หน้าจอแอดมิน (ดูผลรวม)</button>
+      <button id="tabAdminBtn" class="mode-tab" type="button">🖥️ หน้าจอแอดมิน (สำหรับจอคอม)</button>
     </div>
 
-    <!-- ชื่อเกม -->
+    <!-- ชื่อเกม (ไม่มีแสดงชื่อห้องแข่งขัน) -->
     <div class="game-header">
       <h1 class="game-title">HIGH SPEED FINGER</h1>
-      <p class="game-subtitle">ศึกดวลนิ้วไว กดปุ่มทองให้เร็วที่สุด!</p>
+      <p class="game-subtitle">🌈 ศึกดวลนิ้วไว กดปุ่มทองให้เร็วที่สุด! ⚡</p>
       <div>
-        <span id="roomDisplayBadge" class="room-badge">🌐 ห้องแข่งขัน: MAIN</span>
         <span id="syncStatusBadge" class="sync-status">⏳ กำลังเชื่อมต่อเซิร์ฟเวอร์...</span>
       </div>
     </div>
 
-    <!-- หน้าจอที่ 1: ลงทะเบียนชื่อ -->
+    <!-- หน้าจอที่ 1: ผู้เข้าแข่งขันลงทะเบียนชื่อและรอแอดมินกดเริ่มเกม (ไม่มีตารางอันดับและไม่มีชื่อห้อง) -->
     <div id="startScreen" class="screen active">
-      <div class="input-group">
-        <label for="playerNameInput" class="input-label">ใส่ชื่อผู้เข้าแข่งขัน:</label>
-        <input type="text" id="playerNameInput" class="name-input" placeholder="เช่น เทพนิ้วสายฟ้า..." maxlength="20">
-      </div>
-      <button id="startGameBtn" class="btn-primary">🚀 เริ่มการแข่งขัน!</button>
-
-      <!-- ตารางอันดับหน้าแรก -->
-      <div class="leaderboard-section">
-        <div class="leaderboard-header">
-          <span class="leaderboard-title">🏆 อันดับสูงสุด (<span id="homePlayerCount">0</span> คน - ไม่จำกัด)</span>
-          <button id="clearBoardBtn1" class="clear-btn">ล้างข้อมูล</button>
+      <div id="registerFormBox">
+        <div class="input-group">
+          <label for="playerNameInput" class="input-label">✨ ใส่ชื่อของคุณเพื่อเข้าแข่งขัน ✨</label>
+          <input type="text" id="playerNameInput" class="name-input" placeholder="พิมพ์ชื่อของคุณที่นี่..." maxlength="20">
         </div>
-        <ul id="homeLeaderboard" class="leaderboard-list"></ul>
+        <button id="joinWaitBtn" class="btn-primary" type="button">✅ ลงทะเบียนเตรียมพร้อม!</button>
+      </div>
+
+      <!-- กล่องแสดงสถานะรอแอดมินกดเริ่มเกม -->
+      <div id="waitingAdminBox" class="waiting-card" style="display: none;">
+        <div class="waiting-pulse">⏳</div>
+        <h2 style="font-size: 1.4rem; color: #6B21A8; margin-bottom: 6px;">ลงทะเบียนสำเร็จแล้ว!</h2>
+        <p id="waitingPlayerNameText" style="font-size: 1.15rem; font-weight: 800; color: #DB2777; margin-bottom: 10px;"></p>
+        <p style="font-size: 1rem; color: #475569; font-weight: 600;">
+          กรุณาเตรียมนิ้วให้พร้อมบนหน้าจอ<br>เกมจะเริ่มอัตโนมัติทันทีเมื่อแอดมินกดเริ่มเกม!
+        </p>
       </div>
     </div>
 
-    <!-- หน้าจอที่ 2: กำลังแข่งขัน -->
+    <!-- หน้าจอที่ 2: กำลังแข่งขัน (ปุ่มสีทอง 1 ปุ่ม) -->
     <div id="gameScreen" class="screen">
       <div class="stats-row">
         <div class="stat-box">
@@ -613,54 +778,77 @@
       </div>
     </div>
 
-    <!-- หน้าจอที่ 3: สรุปผลและตารางคะแนน -->
+    <!-- หน้าจอที่ 3: สรุปผลคะแนนส่วนตัวของผู้เล่น (ไม่แสดงอันดับผู้เล่นคนอื่น) -->
     <div id="resultScreen" class="screen">
       <div class="result-box">
-        <div id="finalPlayerName" style="font-weight: 800; font-size: 1.2rem;">ยอดเยี่ยมมาก!</div>
+        <div style="font-size: 2.5rem; margin-bottom: 4px;">🎉</div>
+        <div id="finalPlayerName" style="font-weight: 800; font-size: 1.3rem; color: #1E1B4B;">ยอดเยี่ยมมาก!</div>
         <div id="finalScore" class="result-score">0</div>
-        <div style="font-weight: 600; margin-bottom: 8px;">ครั้ง ในเวลา 1 นาที</div>
+        <div style="font-weight: 800; margin-bottom: 10px; color: #475569;">ครั้ง ในเวลา 1 นาที</div>
         <span id="finalCps" class="cps-badge">ความเร็วเฉลี่ย 0.0 ครั้ง/วินาที</span>
+        <p style="margin-top: 14px; font-size: 0.95rem; color: #6B21A8; font-weight: 600;">
+          ✨ ส่งคะแนนเข้าสู่หน้าจอแอดมินเรียบร้อยแล้ว! รอลุ้นผลบนจอหลักได้เลย ✨
+        </p>
       </div>
 
-      <button id="playAgainBtn" class="btn-primary">🔄 แข่งอีกครั้ง / คนถัดไป</button>
-
-      <div class="leaderboard-section">
-        <div class="leaderboard-header">
-          <span class="leaderboard-title">🏆 อันดับทั้งหมด (<span id="resultPlayerCount">0</span> คน)</span>
-          <button id="clearBoardBtn2" class="clear-btn">ล้างข้อมูล</button>
-        </div>
-        <ul id="resultLeaderboard" class="leaderboard-list"></ul>
-      </div>
+      <button id="playAgainBtn" class="btn-primary" type="button">🔄 เตรียมพร้อมรอบถัดไป</button>
     </div>
 
-    <!-- หน้าจอที่ 4: หน้าจอแอดมิน (Admin Dashboard & QR Code) -->
+    <!-- หน้าจอที่ 4: หน้าจอแอดมินขนาดใหญ่สำหรับจอคอมพิวเตอร์ (ตัดชื่อห้องออก โชว์แค่ QR Code + ปุ่มเริ่มเกม + ปุ่มโชว์คะแนนพร้อมเสียงปรบมือวี้ดวิ้ว) -->
     <div id="adminScreen" class="screen">
-      <div class="qr-box">
-        <div style="font-weight: 800; font-size: 1rem; color: #1E293B;">📱 สแกน QR Code เพื่อเข้าแข่งพร้อมกัน</div>
-        <div style="font-size: 0.8rem; color: #64748B;">ผู้เล่นทุกคนที่สแกนจะส่งคะแนนเข้าหน้าแอดมินนี้อัตโนมัติ</div>
-        <img id="qrCodeImg" src="" alt="QR Code สำหรับเข้าเล่นเกม">
-        <div id="shareUrlText" style="font-size: 0.75rem; color: #475569; word-break: break-all; margin-bottom: 8px;"></div>
-        <button id="copyLinkBtn" class="btn-secondary" type="button" style="width: 100%;">🔗 คัดลอกลิงก์ห้องแข่งขัน</button>
-      </div>
-
-      <div class="room-input-row">
-        <input type="text" id="roomCodeInput" class="room-input" placeholder="ตั้งรหัสห้อง เช่น ROOM1" maxlength="15">
-        <button id="changeRoomBtn" class="btn-secondary" type="button">เปลี่ยนห้อง</button>
-      </div>
-
-      <div class="leaderboard-section" style="margin-top: 10px;">
-        <div class="leaderboard-header">
-          <span class="leaderboard-title">👑 กระดานคะแนนสดแอดมิน (<span id="adminPlayerCount">0</span> คน)</span>
-          <button id="clearBoardBtnAdmin" class="clear-btn">ล้างข้อมูลห้องนี้</button>
+      <div class="admin-grid">
+        <!-- คอลัมน์ซ้าย: โชว์เฉพาะ QR Code สำหรับสแกนเข้าเล่น -->
+        <div class="qr-box">
+          <div style="font-weight: 800; font-size: 1.25rem; color: #6B21A8;">📱 สแกน QR Code เข้าแข่งขัน</div>
+          <div style="font-size: 0.9rem; color: #64748B; font-weight: 600;">สแกนแล้วใส่ชื่อรอแอดมินกดเริ่มเกมได้เลย!</div>
+          <img id="qrCodeImg" src="" alt="QR Code สำหรับเข้าเล่นเกม">
+          <button id="copyLinkBtn" class="btn-secondary" type="button" style="width: 100%; margin-top: 6px;">🔗 คัดลอกลิงก์ให้ผู้เข้าแข่งขัน</button>
         </div>
-        <ul id="adminLeaderboard" class="leaderboard-list" style="max-height: 320px;"></ul>
+
+        <!-- คอลัมน์ขวา: แผงควบคุมแอดมิน (กดเริ่มเกม, กดโชว์คะแนน, เสียงปรบมือวี้ดวิ้ว) -->
+        <div class="admin-control-panel">
+          <div class="admin-status-banner">
+            <div>
+              <div style="font-size: 0.95rem; font-weight: 800; color: #64748B;">ผู้เข้าแข่งขันที่เชื่อมต่อแล้ว</div>
+              <div style="font-size: 1.8rem; font-weight: 800; color: #1E1B4B;">👥 <span id="adminPlayerCount">0</span> คน</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 0.95rem; font-weight: 800; color: #64748B;">เวลาแข่งขันรอบปัจจุบัน</div>
+              <div id="adminTimerDisplay" class="admin-timer-big">60.0 วินาที</div>
+            </div>
+          </div>
+
+          <div class="admin-action-buttons">
+            <button id="adminStartGameBtn" class="btn-admin-start" type="button">🚀 กดเริ่มเกมพร้อมกันทุกคน!</button>
+            <button id="adminRevealScoreBtn" class="btn-admin-reveal" type="button">🏆 กดโชว์คะแนน & ประกาศผล!</button>
+            <button id="adminCheerSoundBtn" class="btn-admin-cheer" type="button">👏 เสียงปรบมือ & วี้ดวิ้ว!</button>
+          </div>
+
+          <!-- ส่วนแสดงผลคะแนน (ซ่อนคะแนนไว้จนกว่าแอดมินจะกดโชว์คะแนน) -->
+          <div class="leaderboard-section">
+            <div class="leaderboard-header">
+              <span id="adminBoardTitle" class="leaderboard-title">👑 รายชื่อผู้เข้าแข่งขันและอันดับคะแนน</span>
+              <button id="clearBoardBtnAdmin" class="clear-btn" type="button">🗑️ ล้างข้อมูลเริ่มรอบใหม่</button>
+            </div>
+
+            <div id="scoreHiddenNotice" class="hidden-score-placeholder">
+              <div style="font-size: 2.4rem; margin-bottom: 6px;">🙈✨</div>
+              <div style="font-size: 1.25rem; font-weight: 800;">กำลังซ่อนผลคะแนนเพื่อความตื่นเต้น!</div>
+              <div style="font-size: 0.95rem; font-weight: 600; margin-top: 4px;">
+                เมื่อแข่งขันครบ 1 นาที กดปุ่ม <b>"🏆 กดโชว์คะแนน & ประกาศผล!"</b> ด้านบนเพื่อเปิดเผยอันดับพร้อมเสียงปรบมือและเสียงวี้ดวิ้ว!
+              </div>
+            </div>
+
+            <ul id="adminLeaderboard" class="leaderboard-list" style="display: none;"></ul>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
     // ==========================================
-    // ระบบเสียงเอฟเฟกต์และเพลงประกอบ (Web Audio API)
+    // ระบบเสียงเอฟเฟกต์ เพลงประกอบ และเสียงปรบมือวี้ดวิ้ว (Web Audio API)
     // ==========================================
     let soundEnabled = true;
     let audioCtx = null;
@@ -677,7 +865,7 @@
       }
     }
 
-    // ฟังก์ชันเล่นเพลงประกอบจังหวะสนุกๆ (Arcade Upbeat BGM) ระหว่างเล่นเกม
+    // เพลงประกอบจังหวะสนุกๆ ระหว่างแข่งขัน 1 นาที
     function startBackgroundMusic() {
       stopBackgroundMusic();
       if (!soundEnabled) return;
@@ -690,10 +878,9 @@
         587.33, 523.25, 392.00, 329.63
       ];
       bgmInterval = setInterval(() => {
-        if (!soundEnabled || !isPlaying) return;
+        if (!soundEnabled || (!isPlaying && !isAdminRunningTimer)) return;
         initAudio();
         const freq = melody[bgmStep % melody.length];
-        // เร่งระดับเสียงขึ้นเมื่อเหลือเวลา <= 10 วินาทีสุดท้าย
         const pitchMultiplier = timeLeft <= 10 ? 1.122 : 1.0;
 
         const osc = audioCtx.createOscillator();
@@ -701,7 +888,7 @@
         osc.type = 'square';
         osc.frequency.setValueAtTime(freq * pitchMultiplier, audioCtx.currentTime);
 
-        gain.gain.setValueAtTime(0.045, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.14);
 
         osc.connect(gain);
@@ -773,30 +960,110 @@
       });
     }
 
+    // เสียงปรบมือรัวๆ + เสียงผิวปากวี้ดวิ้ว + แตรฉลองชัยชนะ!
+    function playApplauseAndWhistleSound() {
+      if (!soundEnabled) return;
+      initAudio();
+      const now = audioCtx.currentTime;
+
+      // 1. สังเคราะห์เสียงปรบมือรัวๆ (Crowd Applause Claps)
+      for (let i = 0; i < 48; i++) {
+        const clapTime = now + (i * 0.055) + (Math.random() * 0.035);
+        const bufferSize = audioCtx.sampleRate * 0.075;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let j = 0; j < bufferSize; j++) {
+          output[j] = (Math.random() * 2 - 1) * Math.exp(-j / (audioCtx.sampleRate * 0.022));
+        }
+
+        const whiteNoise = audioCtx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1100 + Math.random() * 700, clapTime);
+        filter.Q.setValueAtTime(1.8, clapTime);
+
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.26, clapTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, clapTime + 0.07);
+
+        whiteNoise.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        whiteNoise.start(clapTime);
+        whiteNoise.stop(clapTime + 0.075);
+      }
+
+      // 2. เสียงวี้ดวิ้ว! (Two-tone Cheering Whistles)
+      const whistleTimes = [0.15, 0.95, 1.75];
+      whistleTimes.forEach((offset) => {
+        const wStart = now + offset;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        // กวาดความถี่เสียงผิวปาก วี้ด-วิ้ว!
+        osc.frequency.setValueAtTime(1450, wStart);
+        osc.frequency.linearRampToValueAtTime(2450, wStart + 0.18);
+        osc.frequency.setValueAtTime(1600, wStart + 0.22);
+        osc.frequency.exponentialRampToValueAtTime(2750, wStart + 0.45);
+        osc.frequency.exponentialRampToValueAtTime(2100, wStart + 0.62);
+
+        gain.gain.setValueAtTime(0.001, wStart);
+        gain.gain.linearRampToValueAtTime(0.22, wStart + 0.05);
+        gain.gain.setValueAtTime(0.22, wStart + 0.5);
+        gain.gain.exponentialRampToValueAtTime(0.001, wStart + 0.65);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(wStart);
+        osc.stop(wStart + 0.66);
+      });
+
+      // 3. เสียงแตรแฟนแฟร์ฉลองแชมป์
+      const fanfare = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+      fanfare.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+        gain.gain.setValueAtTime(0.2, now + idx * 0.09);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.4);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + idx * 0.09);
+        osc.stop(now + idx * 0.09 + 0.42);
+      });
+    }
+
     // ==========================================
-    // ตัวแปรควบคุมเกม & ระบบซิงค์หลายเครื่อง (Real-Time Multi-Broker MQTT + GunDB)
+    // ตัวแปรควบคุมเกม & ระบบซิงค์หลายเครื่อง (Real-Time Dual-MQTT + GunDB)
     // ==========================================
     const GAME_DURATION = 60; // 60 วินาที (1 นาที)
     const urlParams = new URLSearchParams(window.location.search);
-    let currentRoom = (urlParams.get('room') || 'MAIN').toUpperCase();
+    const currentRoom = 'MAIN';
     const roleParam = urlParams.get('role') || (urlParams.get('admin') === '1' ? 'admin' : '');
 
-    let STORAGE_KEY = 'high_speed_finger_room_' + currentRoom;
+    const STORAGE_KEY = 'high_speed_finger_rainbow_room_' + currentRoom;
     let currentPlayer = '';
     let currentSessionId = null;
+    let isPlayerReady = false;
     let score = 0;
     let timeLeft = GAME_DURATION;
     let timerInterval = null;
+    let adminTimerInterval = null;
     let isPlaying = false;
-    let lastRecordId = null;
+    let isAdminRunningTimer = false;
+    let isScoreRevealed = false;
     let remotePlayersMap = {};
 
-    // ระบบเชื่อมต่อ MQTT 2 เซิร์ฟเวอร์คู่ขนาน (EMQX + HiveMQ) เพื่อความเสถียรสูงสุดบนมือถือและคอม
     const mqttClients = [];
     let gun = null;
     let roomNode = null;
 
     // อ้างอิง DOM
+    const appContainer = document.querySelector('.app-container');
     const startScreen = document.getElementById('startScreen');
     const gameScreen = document.getElementById('gameScreen');
     const resultScreen = document.getElementById('resultScreen');
@@ -805,16 +1072,15 @@
     const modeTabsBar = document.querySelector('.mode-tabs');
     const tabPlayerBtn = document.getElementById('tabPlayerBtn');
     const tabAdminBtn = document.getElementById('tabAdminBtn');
-    const roomDisplayBadge = document.getElementById('roomDisplayBadge');
     const syncStatusBadge = document.getElementById('syncStatusBadge');
     const qrCodeImg = document.getElementById('qrCodeImg');
-    const shareUrlText = document.getElementById('shareUrlText');
     const copyLinkBtn = document.getElementById('copyLinkBtn');
-    const roomCodeInput = document.getElementById('roomCodeInput');
-    const changeRoomBtn = document.getElementById('changeRoomBtn');
 
+    const registerFormBox = document.getElementById('registerFormBox');
+    const waitingAdminBox = document.getElementById('waitingAdminBox');
+    const waitingPlayerNameText = document.getElementById('waitingPlayerNameText');
     const playerNameInput = document.getElementById('playerNameInput');
-    const startGameBtn = document.getElementById('startGameBtn');
+    const joinWaitBtn = document.getElementById('joinWaitBtn');
     const soundToggleBtn = document.getElementById('soundToggleBtn');
 
     const timeDisplay = document.getElementById('timeDisplay');
@@ -829,30 +1095,34 @@
     const finalCps = document.getElementById('finalCps');
     const playAgainBtn = document.getElementById('playAgainBtn');
 
-    const homeLeaderboard = document.getElementById('homeLeaderboard');
-    const resultLeaderboard = document.getElementById('resultLeaderboard');
     const adminLeaderboard = document.getElementById('adminLeaderboard');
-    const homePlayerCount = document.getElementById('homePlayerCount');
-    const resultPlayerCount = document.getElementById('resultPlayerCount');
     const adminPlayerCount = document.getElementById('adminPlayerCount');
-    const clearBoardBtn1 = document.getElementById('clearBoardBtn1');
-    const clearBoardBtn2 = document.getElementById('clearBoardBtn2');
+    const adminTimerDisplay = document.getElementById('adminTimerDisplay');
+    const adminStartGameBtn = document.getElementById('adminStartGameBtn');
+    const adminRevealScoreBtn = document.getElementById('adminRevealScoreBtn');
+    const adminCheerSoundBtn = document.getElementById('adminCheerSoundBtn');
+    const scoreHiddenNotice = document.getElementById('scoreHiddenNotice');
     const clearBoardBtnAdmin = document.getElementById('clearBoardBtnAdmin');
 
-    // หากผู้เล่นสแกนมาจาก QR Code (?role=player) ให้ซ่อนแถบหน้าแอดมินทันทีเพื่อไม่ให้สับสน
+    // หากผู้เล่นสแกนมาจาก QR Code (?role=player) ให้ซ่อนแถบสลับโหมดแอดมิน
     if (roleParam === 'player' && modeTabsBar) {
       modeTabsBar.style.display = 'none';
     }
 
     function getRoomTopic() {
-      return 'hsf_dos_2025_room/' + currentRoom;
+      return 'hsf_rainbow_2025_room/' + currentRoom;
+    }
+
+    function getPlayerShareUrl() {
+      const baseUrl = window.location.href.split('?')[0];
+      return `${baseUrl}?role=player`;
     }
 
     function updateSyncStatusUI() {
-      const isConnected = mqttClients.some(c => c && c.connected);
+      const connectedCount = mqttClients.filter(c => c && c.connected).length;
       if (syncStatusBadge) {
-        if (isConnected) {
-          syncStatusBadge.textContent = '🟢 เชื่อมต่อออนไลน์พร้อมแข่ง';
+        if (connectedCount > 0) {
+          syncStatusBadge.textContent = `🟢 เชื่อมต่อออนไลน์พร้อมแข่ง (${connectedCount}/2 เซิร์ฟเวอร์)`;
           syncStatusBadge.classList.add('online');
         } else {
           syncStatusBadge.textContent = '⏳ กำลังเชื่อมต่อเซิร์ฟเวอร์...';
@@ -862,7 +1132,6 @@
     }
 
     function initRealtimeBrokers() {
-      // 1. เชื่อมต่อ MQTT WebSockets สาธารณะที่เสถียรที่สุด 2 แห่งพร้อมกัน
       if (typeof mqtt !== 'undefined') {
         const brokerUrls = [
           'wss://broker.emqx.io:8084/mqtt',
@@ -880,7 +1149,6 @@
             client.on('connect', () => {
               updateSyncStatusUI();
               client.subscribe(getRoomTopic(), { qos: 0 }, () => {
-                // ขอข้อมูลรายชื่อผู้เล่นล่าสุดในห้องทันทีที่เชื่อมต่อสำเร็จ
                 publishPacket({ type: 'sync_request', room: currentRoom });
               });
             });
@@ -901,7 +1169,6 @@
         });
       }
 
-      // 2. เชื่อมต่อ GunDB คู่ขนานเป็นตัวสำรอง
       try {
         if (typeof Gun !== 'undefined') {
           gun = Gun([
@@ -929,19 +1196,21 @@
       if (msg.type === 'score_update' && msg.record && msg.record.id) {
         const rec = msg.record;
         const existing = remotePlayersMap[rec.id];
-        // อัปเดตเมื่อเป็นข้อมูลใหม่กว่า หรือมีคะแนนสูงกว่า
-        if (!existing || rec.score >= existing.score || rec.status === 'finished') {
+        if (!existing || rec.score >= existing.score || rec.status === 'finished' || rec.status === 'ready') {
           remotePlayersMap[rec.id] = rec;
           persistLocalCache();
-          renderAllLeaderboards();
+          renderAdminLeaderboard();
+        }
+      } else if (msg.type === 'admin_start_game') {
+        // เมื่อแอดมินกดเริ่มเกม ให้ผู้เล่นที่ลงทะเบียนรอไว้เริ่มเกมพร้อมกันทันที!
+        if ((isPlayerReady || currentPlayer) && !isPlaying && !adminScreen.classList.contains('active')) {
+          beginPlayerGameplay();
         }
       } else if (msg.type === 'clear_room') {
         remotePlayersMap = {};
         localStorage.removeItem(STORAGE_KEY);
-        lastRecordId = null;
-        renderAllLeaderboards();
+        renderAdminLeaderboard();
       } else if (msg.type === 'sync_request') {
-        // เครื่องที่มีข้อมูลผู้เล่นในห้องช่วยส่งข้อมูลล่าสุดกลับให้เครื่องที่เพิ่งเข้ามา
         Object.values(remotePlayersMap).forEach(rec => {
           publishPacket({
             type: 'score_update',
@@ -952,20 +1221,7 @@
       }
     }
 
-    // ==========================================
-    // ฟังก์ชันจัดการตารางคะแนน & ซิงค์ข้อมูลออนไลน์เข้าหน้าแอดมิน
-    // ==========================================
-    function subscribeRoom(roomCode) {
-      const oldTopic = getRoomTopic();
-      currentRoom = roomCode.toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'MAIN';
-      const newTopic = getRoomTopic();
-
-      STORAGE_KEY = 'high_speed_finger_room_' + currentRoom;
-      roomDisplayBadge.textContent = `🌐 ห้องแข่งขัน: ${currentRoom}`;
-      roomCodeInput.value = currentRoom;
-      remotePlayersMap = {};
-
-      // โหลดข้อมูลในเครื่องก่อน
+    function setupRoomAndQR() {
       try {
         const localRaw = localStorage.getItem(STORAGE_KEY);
         const localArr = localRaw ? JSON.parse(localRaw) : [];
@@ -974,27 +1230,11 @@
         });
       } catch (e) {}
 
-      // อัปเดต QR Code และลิงก์สำหรับแชร์ให้ผู้เล่นสแกน (บังคับเปิดโหมดผู้เล่นอัตโนมัติด้วย role=player)
-      const baseUrl = window.location.href.split('?')[0];
-      const playerJoinUrl = `${baseUrl}?room=${encodeURIComponent(currentRoom)}&role=player`;
-      shareUrlText.textContent = playerJoinUrl;
-      qrCodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(playerJoinUrl)}`;
+      const playerJoinUrl = getPlayerShareUrl();
+      qrCodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(playerJoinUrl)}`;
 
-      // เปลี่ยนช่องสัญญาณ MQTT ไปยังห้องใหม่
-      mqttClients.forEach(client => {
-        if (client && client.connected) {
-          try {
-            if (oldTopic !== newTopic) client.unsubscribe(oldTopic);
-            client.subscribe(newTopic, { qos: 0 }, () => {
-              publishPacket({ type: 'sync_request', room: currentRoom });
-            });
-          } catch (e) {}
-        }
-      });
-
-      // ซิงค์ข้อมูลสำรองด้วย GunDB
       if (gun) {
-        roomNode = gun.get('hsf_game_2025_room_' + currentRoom).get('players');
+        roomNode = gun.get('hsf_rainbow_2025_' + currentRoom).get('players');
         roomNode.map().on((data, key) => {
           if (!data || data.deleted) {
             delete remotePlayersMap[key];
@@ -1008,10 +1248,10 @@
             };
           }
           persistLocalCache();
-          renderAllLeaderboards();
+          renderAdminLeaderboard();
         });
       }
-      renderAllLeaderboards();
+      renderAdminLeaderboard();
     }
 
     function persistLocalCache() {
@@ -1038,53 +1278,44 @@
       remotePlayersMap[record.id] = record;
       persistLocalCache();
 
-      // ส่งข้อมูลผ่าน MQTT แบบเรียลไทม์ทันที
       publishPacket({
         type: 'score_update',
         room: currentRoom,
         record: record
       });
 
-      // ส่งข้อมูลผ่าน GunDB สำรอง
       if (roomNode) {
         roomNode.get(record.id).put(record);
       }
-      renderAllLeaderboards();
+      renderAdminLeaderboard();
     }
 
     function saveScore(name, playerScore) {
       const id = currentSessionId || ('p_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6));
-      lastRecordId = String(id);
-      syncPlayerScore(lastRecordId, name, playerScore, 'finished');
-      // ส่งซ้ำอีกครั้งหลังจบเกม 0.5 วินาทีเพื่อความชัวร์ 100% บนเน็ตมือถือ
+      syncPlayerScore(id, name, playerScore, 'finished');
       setTimeout(() => {
-        syncPlayerScore(lastRecordId, name, playerScore, 'finished');
+        syncPlayerScore(id, name, playerScore, 'finished');
       }, 500);
     }
 
-    function renderAllLeaderboards() {
-      renderLeaderboard(homeLeaderboard);
-      renderLeaderboard(resultLeaderboard);
-      renderLeaderboard(adminLeaderboard);
-    }
-
-    function renderLeaderboard(targetUl) {
-      if (!targetUl) return;
+    function renderAdminLeaderboard() {
+      if (!adminLeaderboard) return;
       const list = getLeaderboard();
-      targetUl.innerHTML = '';
 
-      if (homePlayerCount) homePlayerCount.textContent = list.length.toLocaleString();
-      if (resultPlayerCount) resultPlayerCount.textContent = list.length.toLocaleString();
-      if (adminPlayerCount) adminPlayerCount.textContent = list.length.toLocaleString();
+      if (adminPlayerCount) {
+        adminPlayerCount.textContent = list.length.toLocaleString();
+      }
+
+      adminLeaderboard.innerHTML = '';
 
       if (list.length === 0) {
-        targetUl.innerHTML = '<li style="text-align:center; color:#94A3B8; padding:12px;">ยังไม่มีรายชื่อผู้เข้าแข่งขัน (รองรับไม่จำกัดจำนวนคน)</li>';
+        adminLeaderboard.innerHTML = '<li style="text-align:center; color:#94A3B8; padding:18px;">ยังไม่มีรายชื่อผู้เข้าแข่งขันที่สแกนเข้ามา</li>';
         return;
       }
 
       list.forEach((item, index) => {
         const li = document.createElement('li');
-        li.className = 'leaderboard-item' + (String(item.id) === String(lastRecordId) ? ' highlight' : '');
+        li.className = 'leaderboard-item' + (index === 0 && item.score > 0 ? ' rank-top-1' : '');
 
         let rankClass = '';
         let medal = index + 1;
@@ -1092,19 +1323,22 @@
         else if (index === 1) { rankClass = 'rank-2'; medal = '🥈'; }
         else if (index === 2) { rankClass = 'rank-3'; medal = '🥉'; }
 
-        const liveBadge = item.status === 'playing'
-          ? '<span class="status-playing">กำลังกดสดๆ ⚡</span>'
-          : '';
+        let statusBadge = '';
+        if (item.status === 'playing') {
+          statusBadge = '<span class="status-playing">กำลังกดสดๆ ⚡</span>';
+        } else if (item.status === 'ready') {
+          statusBadge = '<span class="status-ready">พร้อมแข่ง ✅</span>';
+        }
 
         li.innerHTML = `
           <div class="player-info">
             <span class="rank-badge ${rankClass}">${medal}</span>
             <span class="player-name">${escapeHtml(item.name)}</span>
-            ${liveBadge}
+            ${statusBadge}
           </div>
           <div class="player-score">${item.score.toLocaleString()} ครั้ง</div>
         `;
-        targetUl.appendChild(li);
+        adminLeaderboard.appendChild(li);
       });
     }
 
@@ -1115,7 +1349,7 @@
     }
 
     function clearLeaderboard() {
-      if (confirm(`ต้องการล้างรายชื่อและคะแนนทั้งหมดในห้อง "${currentRoom}" ใช่หรือไม่?`)) {
+      if (confirm('ต้องการล้างรายชื่อและคะแนนทั้งหมดเพื่อเริ่มรอบใหม่ใช่หรือไม่?')) {
         Object.keys(remotePlayersMap).forEach(key => {
           if (roomNode) {
             roomNode.get(key).put({ deleted: true });
@@ -1123,31 +1357,61 @@
         });
         remotePlayersMap = {};
         localStorage.removeItem(STORAGE_KEY);
-        lastRecordId = null;
+        isScoreRevealed = false;
+        updateScoreVisibilityUI();
         publishPacket({ type: 'clear_room', room: currentRoom });
-        renderAllLeaderboards();
+        renderAdminLeaderboard();
+      }
+    }
+
+    function updateScoreVisibilityUI() {
+      if (isScoreRevealed) {
+        scoreHiddenNotice.style.display = 'none';
+        adminLeaderboard.style.display = 'block';
+        adminRevealScoreBtn.textContent = '🙈 ซ่อนตารางคะแนน';
+      } else {
+        scoreHiddenNotice.style.display = 'block';
+        adminLeaderboard.style.display = 'none';
+        adminRevealScoreBtn.textContent = '🏆 กดโชว์คะแนน & ประกาศผล!';
       }
     }
 
     // ==========================================
-    // ฟังก์ชันควบคุมการเล่นเกม
+    // ฟังก์ชันควบคุมการเล่นเกม (ผู้เล่นลงทะเบียน -> แอดมินกดเริ่ม)
     // ==========================================
     function switchScreen(screenEl) {
       [startScreen, gameScreen, resultScreen, adminScreen].forEach(s => s.classList.remove('active'));
       screenEl.classList.add('active');
     }
 
-    function startGame() {
+    // ผู้เล่นกดปุ่มลงทะเบียนเตรียมพร้อม
+    function registerPlayerAndWait() {
       const name = playerNameInput.value.trim();
       if (!name) {
-        alert('กรุณาใส่ชื่อผู้เข้าแข่งขันก่อนเริ่มเกมครับ!');
+        alert('กรุณาใส่ชื่อผู้เข้าแข่งขันก่อนครับ!');
         playerNameInput.focus();
         return;
       }
 
+      initAudio(); // ปลดล็อกเสียงบนมือถือตั้งแต่ตอนกดลงทะเบียน
+      playStartSound();
+
       currentPlayer = name;
       currentSessionId = 'p_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
-      lastRecordId = currentSessionId;
+      isPlayerReady = true;
+
+      registerFormBox.style.display = 'none';
+      waitingAdminBox.style.display = 'block';
+      waitingPlayerNameText.textContent = `ผู้เข้าแข่งขัน: ${currentPlayer}`;
+
+      // ส่งชื่อไปรอในหน้าแอดมินทันทีด้วยคะแนน 0 (สถานะ พร้อมแข่ง)
+      syncPlayerScore(currentSessionId, currentPlayer, 0, 'ready');
+    }
+
+    // เริ่มเกมบนจอมือถือผู้เล่น (ทำงานอัตโนมัติเมื่อแอดมินกดเริ่มเกม)
+    function beginPlayerGameplay() {
+      if (!currentPlayer) return;
+      isPlayerReady = false;
       score = 0;
       timeLeft = GAME_DURATION;
       isPlaying = true;
@@ -1165,13 +1429,13 @@
 
       const startTime = performance.now();
       let lastSyncSecond = 0;
+      clearInterval(timerInterval);
       timerInterval = setInterval(() => {
         const elapsed = (performance.now() - startTime) / 1000;
         timeLeft = Math.max(0, GAME_DURATION - elapsed);
         timeDisplay.textContent = timeLeft.toFixed(1);
         progressBar.style.width = `${(timeLeft / GAME_DURATION) * 100}%`;
 
-        // ซิงค์คะแนนสดๆ เข้าหน้าแอดมินทุกๆ 1 วินาทีระหว่างกด
         const wholeSec = Math.floor(elapsed);
         if (wholeSec > lastSyncSecond) {
           lastSyncSecond = wholeSec;
@@ -1188,6 +1452,46 @@
       }, 50);
     }
 
+    // แอดมินกดปุ่มเริ่มเกมให้ผู้เข้าแข่งขันทุกคนพร้อมกัน
+    function triggerAdminStartGame() {
+      initAudio();
+      playStartSound();
+
+      // ซ่อนคะแนนไว้ระหว่างแข่งเพื่อรอลุ้นตอนจบ
+      isScoreRevealed = false;
+      updateScoreVisibilityUI();
+
+      // ส่งคำสั่งเริ่มเกมไปยังมือถือทุกเครื่องพร้อมกัน (ยิงซ้ำ 2 ครั้งกันเน็ตสะดุด)
+      publishPacket({ type: 'admin_start_game', room: currentRoom, timestamp: Date.now() });
+      setTimeout(() => {
+        publishPacket({ type: 'admin_start_game', room: currentRoom, timestamp: Date.now() });
+      }, 250);
+
+      // นับถอยหลัง 60 วินาทีบนหน้าจอแอดมินพร้อมเสียงเพลงประกอบ
+      timeLeft = GAME_DURATION;
+      isAdminRunningTimer = true;
+      startBackgroundMusic();
+
+      const startTime = performance.now();
+      clearInterval(adminTimerInterval);
+      adminStartGameBtn.textContent = '⚡ กำลังแข่งขัน...';
+
+      adminTimerInterval = setInterval(() => {
+        const elapsed = (performance.now() - startTime) / 1000;
+        timeLeft = Math.max(0, GAME_DURATION - elapsed);
+        adminTimerDisplay.textContent = `${timeLeft.toFixed(1)} วินาที`;
+
+        if (timeLeft <= 0) {
+          clearInterval(adminTimerInterval);
+          isAdminRunningTimer = false;
+          stopBackgroundMusic();
+          playFinishSound();
+          adminTimerDisplay.textContent = 'หมดเวลา! 🎉';
+          adminStartGameBtn.textContent = '🚀 กดเริ่มเกมพร้อมกันทุกคน!';
+        }
+      }, 50);
+    }
+
     function handleGoldButtonTap(e) {
       if (!isPlaying) return;
       e.preventDefault();
@@ -1196,11 +1500,9 @@
       scoreDisplay.textContent = score.toLocaleString();
       playTapSound();
 
-      // เอฟเฟกต์ยุบปุ่ม
       goldBtn.classList.add('pressed');
       setTimeout(() => goldBtn.classList.remove('pressed'), 50);
 
-      // สร้างตัวเลข +1 ลอยขึ้น
       const plus = document.createElement('span');
       plus.className = 'floating-plus';
       plus.textContent = '+1';
@@ -1226,24 +1528,23 @@
       finalScore.textContent = score.toLocaleString();
       finalCps.textContent = `ความเร็วเฉลี่ย ${(score / GAME_DURATION).toFixed(2)} ครั้ง/วินาที`;
 
-      renderAllLeaderboards();
       switchScreen(resultScreen);
     }
 
     // ==========================================
     // การผูก Event Listeners
     // ==========================================
-    startGameBtn.addEventListener('click', startGame);
+    joinWaitBtn.addEventListener('click', registerPlayerAndWait);
 
     playerNameInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') startGame();
+      if (e.key === 'Enter') registerPlayerAndWait();
     });
 
-    // ใช้ pointerdown เพื่อตอบสนองการแตะบนจอมือถือได้เร็วที่สุด
     goldBtn.addEventListener('pointerdown', handleGoldButtonTap);
 
     playAgainBtn.addEventListener('click', () => {
-      playerNameInput.value = '';
+      registerFormBox.style.display = 'block';
+      waitingAdminBox.style.display = 'none';
       switchScreen(startScreen);
       playerNameInput.focus();
     });
@@ -1253,7 +1554,7 @@
       soundToggleBtn.textContent = soundEnabled ? '🔊' : '🔇';
       if (!soundEnabled) {
         stopBackgroundMusic();
-      } else if (isPlaying) {
+      } else if (isPlaying || isAdminRunningTimer) {
         startBackgroundMusic();
       }
     });
@@ -1261,24 +1562,34 @@
     tabPlayerBtn.addEventListener('click', () => {
       tabPlayerBtn.classList.add('active');
       tabAdminBtn.classList.remove('active');
+      if (appContainer) appContainer.classList.remove('admin-wide');
       if (!isPlaying) switchScreen(startScreen);
     });
 
     tabAdminBtn.addEventListener('click', () => {
       tabAdminBtn.classList.add('active');
       tabPlayerBtn.classList.remove('active');
+      if (appContainer) appContainer.classList.add('admin-wide');
       if (!isPlaying) switchScreen(adminScreen);
     });
 
-    changeRoomBtn.addEventListener('click', () => {
-      const newRoom = roomCodeInput.value.trim();
-      if (newRoom) {
-        subscribeRoom(newRoom);
+    adminStartGameBtn.addEventListener('click', triggerAdminStartGame);
+
+    adminRevealScoreBtn.addEventListener('click', () => {
+      isScoreRevealed = !isScoreRevealed;
+      updateScoreVisibilityUI();
+      if (isScoreRevealed) {
+        renderAdminLeaderboard();
+        playApplauseAndWhistleSound();
       }
     });
 
+    adminCheerSoundBtn.addEventListener('click', () => {
+      playApplauseAndWhistleSound();
+    });
+
     copyLinkBtn.addEventListener('click', () => {
-      const urlToCopy = shareUrlText.textContent;
+      const urlToCopy = getPlayerShareUrl();
       navigator.clipboard.writeText(urlToCopy).then(() => {
         alert('คัดลอกลิงก์สำหรับส่งให้ผู้เข้าแข่งขันเรียบร้อยแล้ว!');
       }).catch(() => {
@@ -1286,13 +1597,11 @@
       });
     });
 
-    clearBoardBtn1.addEventListener('click', clearLeaderboard);
-    clearBoardBtn2.addEventListener('click', clearLeaderboard);
     clearBoardBtnAdmin.addEventListener('click', clearLeaderboard);
 
-    // เริ่มต้นเชื่อมต่อเซิร์ฟเวอร์เรียลไทม์และเข้าห้องแข่งขัน
+    // เริ่มต้นเชื่อมต่อเซิร์ฟเวอร์เรียลไทม์
     initRealtimeBrokers();
-    subscribeRoom(currentRoom);
+    setupRoomAndQR();
     if (roleParam === 'admin') {
       tabAdminBtn.click();
     }
