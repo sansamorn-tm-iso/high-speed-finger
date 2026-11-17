@@ -6,7 +6,9 @@
   <title>High Speed Finger - เกมนิ้วไวท้าดวล</title>
   <!-- Google Fonts: Kanit สำหรับภาษาไทยที่อ่านง่ายและทันสมัย -->
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;800&display=swap" rel="stylesheet">
-  <!-- GunDB สำหรับซิงค์คะแนนผู้เล่นหลายเครื่องเข้าหน้าแอดมินแบบเรียลไทม์โดยไม่ต้องตั้งค่าเซิร์ฟเวอร์ -->
+  <!-- MQTT over WebSocket สำหรับซิงค์คะแนนผู้เล่นหลายเครื่องเข้าหน้าแอดมินแบบเรียลไทม์ 100% -->
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <!-- GunDB สำรองเพิ่มเติม -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
     :root {
@@ -185,6 +187,22 @@
       padding: 2px 8px;
       border-radius: 999px;
       margin-left: 6px;
+    }
+
+    .sync-status {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-top: 4px;
+      background: #FEF3C7;
+      color: #B45309;
+    }
+
+    .sync-status.online {
+      background: #DCFCE7;
+      color: #15803D;
     }
 
     /* หัวข้อเกม */
@@ -544,7 +562,10 @@
     <div class="game-header">
       <h1 class="game-title">HIGH SPEED FINGER</h1>
       <p class="game-subtitle">ศึกดวลนิ้วไว กดปุ่มทองให้เร็วที่สุด!</p>
-      <div id="roomDisplayBadge" class="room-badge">🌐 ห้องแข่งขัน: MAIN</div>
+      <div>
+        <span id="roomDisplayBadge" class="room-badge">🌐 ห้องแข่งขัน: MAIN</span>
+        <span id="syncStatusBadge" class="sync-status">⏳ กำลังเชื่อมต่อเซิร์ฟเวอร์...</span>
+      </div>
     </div>
 
     <!-- หน้าจอที่ 1: ลงทะเบียนชื่อ -->
@@ -753,12 +774,12 @@
     }
 
     // ==========================================
-    // ตัวแปรควบคุมเกม & ระบบซิงค์หลายเครื่อง (Cloud Room Sync)
+    // ตัวแปรควบคุมเกม & ระบบซิงค์หลายเครื่อง (Real-Time Multi-Broker MQTT + GunDB)
     // ==========================================
     const GAME_DURATION = 60; // 60 วินาที (1 นาที)
     const urlParams = new URLSearchParams(window.location.search);
     let currentRoom = (urlParams.get('room') || 'MAIN').toUpperCase();
-    const isAdminInitial = urlParams.get('admin') === '1';
+    const roleParam = urlParams.get('role') || (urlParams.get('admin') === '1' ? 'admin' : '');
 
     let STORAGE_KEY = 'high_speed_finger_room_' + currentRoom;
     let currentPlayer = '';
@@ -770,19 +791,10 @@
     let lastRecordId = null;
     let remotePlayersMap = {};
 
-    // เชื่อมต่อ GunDB Relay สาธารณะเพื่อซิงค์คะแนนทุกเครื่องเข้าหน้าแอดมินอัตโนมัติ
+    // ระบบเชื่อมต่อ MQTT 2 เซิร์ฟเวอร์คู่ขนาน (EMQX + HiveMQ) เพื่อความเสถียรสูงสุดบนมือถือและคอม
+    const mqttClients = [];
     let gun = null;
     let roomNode = null;
-    try {
-      if (typeof Gun !== 'undefined') {
-        gun = Gun([
-          'https://gun-manhattan.herokuapp.com/gun',
-          'https://peer.wallie.io/gun'
-        ]);
-      }
-    } catch (e) {
-      console.warn('Offline / Local mode active');
-    }
 
     // อ้างอิง DOM
     const startScreen = document.getElementById('startScreen');
@@ -790,9 +802,11 @@
     const resultScreen = document.getElementById('resultScreen');
     const adminScreen = document.getElementById('adminScreen');
 
+    const modeTabsBar = document.querySelector('.mode-tabs');
     const tabPlayerBtn = document.getElementById('tabPlayerBtn');
     const tabAdminBtn = document.getElementById('tabAdminBtn');
     const roomDisplayBadge = document.getElementById('roomDisplayBadge');
+    const syncStatusBadge = document.getElementById('syncStatusBadge');
     const qrCodeImg = document.getElementById('qrCodeImg');
     const shareUrlText = document.getElementById('shareUrlText');
     const copyLinkBtn = document.getElementById('copyLinkBtn');
@@ -825,11 +839,127 @@
     const clearBoardBtn2 = document.getElementById('clearBoardBtn2');
     const clearBoardBtnAdmin = document.getElementById('clearBoardBtnAdmin');
 
+    // หากผู้เล่นสแกนมาจาก QR Code (?role=player) ให้ซ่อนแถบหน้าแอดมินทันทีเพื่อไม่ให้สับสน
+    if (roleParam === 'player' && modeTabsBar) {
+      modeTabsBar.style.display = 'none';
+    }
+
+    function getRoomTopic() {
+      return 'hsf_dos_2025_room/' + currentRoom;
+    }
+
+    function updateSyncStatusUI() {
+      const isConnected = mqttClients.some(c => c && c.connected);
+      if (syncStatusBadge) {
+        if (isConnected) {
+          syncStatusBadge.textContent = '🟢 เชื่อมต่อออนไลน์พร้อมแข่ง';
+          syncStatusBadge.classList.add('online');
+        } else {
+          syncStatusBadge.textContent = '⏳ กำลังเชื่อมต่อเซิร์ฟเวอร์...';
+          syncStatusBadge.classList.remove('online');
+        }
+      }
+    }
+
+    function initRealtimeBrokers() {
+      // 1. เชื่อมต่อ MQTT WebSockets สาธารณะที่เสถียรที่สุด 2 แห่งพร้อมกัน
+      if (typeof mqtt !== 'undefined') {
+        const brokerUrls = [
+          'wss://broker.emqx.io:8084/mqtt',
+          'wss://broker.hivemq.com:8884/mqtt'
+        ];
+        brokerUrls.forEach((url) => {
+          try {
+            const client = mqtt.connect(url, {
+              clean: true,
+              connectTimeout: 5000,
+              reconnectPeriod: 2000,
+              clientId: 'hsf_' + Math.random().toString(16).substring(2, 10)
+            });
+
+            client.on('connect', () => {
+              updateSyncStatusUI();
+              client.subscribe(getRoomTopic(), { qos: 0 }, () => {
+                // ขอข้อมูลรายชื่อผู้เล่นล่าสุดในห้องทันทีที่เชื่อมต่อสำเร็จ
+                publishPacket({ type: 'sync_request', room: currentRoom });
+              });
+            });
+
+            client.on('reconnect', updateSyncStatusUI);
+            client.on('close', updateSyncStatusUI);
+
+            client.on('message', (topic, payload) => {
+              if (topic !== getRoomTopic()) return;
+              try {
+                const msg = JSON.parse(payload.toString());
+                handleIncomingRealtimePacket(msg);
+              } catch (e) {}
+            });
+
+            mqttClients.push(client);
+          } catch (err) {}
+        });
+      }
+
+      // 2. เชื่อมต่อ GunDB คู่ขนานเป็นตัวสำรอง
+      try {
+        if (typeof Gun !== 'undefined') {
+          gun = Gun([
+            'https://gun-manhattan.herokuapp.com/gun',
+            'https://peer.wallie.io/gun'
+          ]);
+        }
+      } catch (e) {}
+    }
+
+    function publishPacket(packet) {
+      const str = JSON.stringify(packet);
+      mqttClients.forEach(client => {
+        if (client && client.connected) {
+          try {
+            client.publish(getRoomTopic(), str, { qos: 0 });
+          } catch (e) {}
+        }
+      });
+    }
+
+    function handleIncomingRealtimePacket(msg) {
+      if (!msg || msg.room !== currentRoom) return;
+
+      if (msg.type === 'score_update' && msg.record && msg.record.id) {
+        const rec = msg.record;
+        const existing = remotePlayersMap[rec.id];
+        // อัปเดตเมื่อเป็นข้อมูลใหม่กว่า หรือมีคะแนนสูงกว่า
+        if (!existing || rec.score >= existing.score || rec.status === 'finished') {
+          remotePlayersMap[rec.id] = rec;
+          persistLocalCache();
+          renderAllLeaderboards();
+        }
+      } else if (msg.type === 'clear_room') {
+        remotePlayersMap = {};
+        localStorage.removeItem(STORAGE_KEY);
+        lastRecordId = null;
+        renderAllLeaderboards();
+      } else if (msg.type === 'sync_request') {
+        // เครื่องที่มีข้อมูลผู้เล่นในห้องช่วยส่งข้อมูลล่าสุดกลับให้เครื่องที่เพิ่งเข้ามา
+        Object.values(remotePlayersMap).forEach(rec => {
+          publishPacket({
+            type: 'score_update',
+            room: currentRoom,
+            record: rec
+          });
+        });
+      }
+    }
+
     // ==========================================
     // ฟังก์ชันจัดการตารางคะแนน & ซิงค์ข้อมูลออนไลน์เข้าหน้าแอดมิน
     // ==========================================
     function subscribeRoom(roomCode) {
+      const oldTopic = getRoomTopic();
       currentRoom = roomCode.toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'MAIN';
+      const newTopic = getRoomTopic();
+
       STORAGE_KEY = 'high_speed_finger_room_' + currentRoom;
       roomDisplayBadge.textContent = `🌐 ห้องแข่งขัน: ${currentRoom}`;
       roomCodeInput.value = currentRoom;
@@ -840,17 +970,29 @@
         const localRaw = localStorage.getItem(STORAGE_KEY);
         const localArr = localRaw ? JSON.parse(localRaw) : [];
         localArr.forEach(item => {
-          remotePlayersMap[item.id] = item;
+          if (item && item.id) remotePlayersMap[item.id] = item;
         });
       } catch (e) {}
 
-      // อัปเดต QR Code และลิงก์สำหรับแชร์ให้ผู้เล่นสแกน
+      // อัปเดต QR Code และลิงก์สำหรับแชร์ให้ผู้เล่นสแกน (บังคับเปิดโหมดผู้เล่นอัตโนมัติด้วย role=player)
       const baseUrl = window.location.href.split('?')[0];
-      const playerJoinUrl = `${baseUrl}?room=${encodeURIComponent(currentRoom)}`;
+      const playerJoinUrl = `${baseUrl}?room=${encodeURIComponent(currentRoom)}&role=player`;
       shareUrlText.textContent = playerJoinUrl;
-      qrCodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(playerJoinUrl)}`;
+      qrCodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(playerJoinUrl)}`;
 
-      // ซิงค์ข้อมูลแบบเรียลไทม์จากทุกเครื่องด้วย GunDB
+      // เปลี่ยนช่องสัญญาณ MQTT ไปยังห้องใหม่
+      mqttClients.forEach(client => {
+        if (client && client.connected) {
+          try {
+            if (oldTopic !== newTopic) client.unsubscribe(oldTopic);
+            client.subscribe(newTopic, { qos: 0 }, () => {
+              publishPacket({ type: 'sync_request', room: currentRoom });
+            });
+          } catch (e) {}
+        }
+      });
+
+      // ซิงค์ข้อมูลสำรองด้วย GunDB
       if (gun) {
         roomNode = gun.get('hsf_game_2025_room_' + currentRoom).get('players');
         roomNode.map().on((data, key) => {
@@ -895,6 +1037,15 @@
       };
       remotePlayersMap[record.id] = record;
       persistLocalCache();
+
+      // ส่งข้อมูลผ่าน MQTT แบบเรียลไทม์ทันที
+      publishPacket({
+        type: 'score_update',
+        room: currentRoom,
+        record: record
+      });
+
+      // ส่งข้อมูลผ่าน GunDB สำรอง
       if (roomNode) {
         roomNode.get(record.id).put(record);
       }
@@ -905,6 +1056,10 @@
       const id = currentSessionId || ('p_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6));
       lastRecordId = String(id);
       syncPlayerScore(lastRecordId, name, playerScore, 'finished');
+      // ส่งซ้ำอีกครั้งหลังจบเกม 0.5 วินาทีเพื่อความชัวร์ 100% บนเน็ตมือถือ
+      setTimeout(() => {
+        syncPlayerScore(lastRecordId, name, playerScore, 'finished');
+      }, 500);
     }
 
     function renderAllLeaderboards() {
@@ -969,6 +1124,7 @@
         remotePlayersMap = {};
         localStorage.removeItem(STORAGE_KEY);
         lastRecordId = null;
+        publishPacket({ type: 'clear_room', room: currentRoom });
         renderAllLeaderboards();
       }
     }
@@ -1134,9 +1290,10 @@
     clearBoardBtn2.addEventListener('click', clearLeaderboard);
     clearBoardBtnAdmin.addEventListener('click', clearLeaderboard);
 
-    // เริ่มต้นเชื่อมต่อห้องแข่งขันและโหลดตารางอันดับ
+    // เริ่มต้นเชื่อมต่อเซิร์ฟเวอร์เรียลไทม์และเข้าห้องแข่งขัน
+    initRealtimeBrokers();
     subscribeRoom(currentRoom);
-    if (isAdminInitial) {
+    if (roleParam === 'admin') {
       tabAdminBtn.click();
     }
   </script>
