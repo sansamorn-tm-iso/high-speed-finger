@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>High Speed Finger - เกมนิ้วไวท้าดวล</title>
+  <!-- Google Fonts: Kanit สำหรับภาษาไทยที่อ่านง่ายและทันสมัย -->
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;800&display=swap" rel="stylesheet">
+  <!-- GunDB สำหรับซิงค์คะแนนผู้เล่นหลายเครื่องเข้าหน้าแอดมินแบบเรียลไทม์โดยไม่ต้องตั้งค่าเซิร์ฟเวอร์ -->
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #FFDEE9 0%, #B5FFFC 100%);
+      --card-bg: rgba(255, 255, 255, 0.92);
+      --primary: #FF5722;
+      --secondary: #2196F3;
+      --text-dark: #1E293B;
+      --text-muted: #64748B;
+      --gold-top: #FFE066;
+      --gold-mid: #FFD700;
+      --gold-bot: #F59E0B;
+      --gold-edge: #B45309;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Kanit', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      color: var(--text-dark);
+      overflow-x: hidden;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card-bg);
+      border-radius: 28px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+      padding: 24px 20px;
+      position: relative;
+      overflow: hidden;
+      border: 3px solid #FFFFFF;
+    }
+
+    /* แถบด้านบน */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .badge {
+      background: #FEF3C7;
+      color: #D97706;
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid #FDE68A;
+    }
+
+    .sound-btn {
+      background: #F1F5F9;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s ease;
+    }
+
+    .sound-btn:active {
+      transform: scale(0.9);
+    }
+
+    /* แถบสลับโหมด ผู้เล่น / แอดมิน */
+    .mode-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      background: #F1F5F9;
+      padding: 5px;
+      border-radius: 14px;
+    }
+
+    .mode-tab {
+      flex: 1;
+      padding: 8px 10px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+
+    .mode-tab.active {
+      background: #FFFFFF;
+      color: var(--text-dark);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .room-badge {
+      display: inline-block;
+      background: #EFF6FF;
+      color: #1D4ED8;
+      border: 1px solid #BFDBFE;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-top: 6px;
+    }
+
+    .qr-box {
+      text-align: center;
+      background: #FFFFFF;
+      border: 2px dashed #CBD5E1;
+      border-radius: 18px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .qr-box img {
+      width: 170px;
+      height: 170px;
+      border-radius: 10px;
+      margin: 8px auto;
+      display: block;
+    }
+
+    .room-input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .room-input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 2px solid #CBD5E1;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-align: center;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .btn-secondary {
+      padding: 10px 14px;
+      background: #3B82F6;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .status-playing {
+      font-size: 0.75rem;
+      background: #DCFCE7;
+      color: #15803D;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-left: 6px;
+    }
+
+    /* หัวข้อเกม */
+    .game-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .game-title {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1.1;
+      background: linear-gradient(90deg, #FF512F, #F09819);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .game-subtitle {
+      font-size: 1rem;
+      color: var(--text-muted);
+    }
+
+    /* หน้าจอแต่ละสถานะ */
+    .screen {
+      display: none;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ฟอร์มกรอกชื่อ */
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-dark);
+    }
+
+    .name-input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 1.15rem;
+      border: 2px solid #CBD5E1;
+      border-radius: 16px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      text-align: center;
+      font-weight: 600;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .name-input:focus {
+      border-color: #F59E0B;
+      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 15px;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      background: linear-gradient(135deg, #10B981, #059669);
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 6px 0 #047857;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    .btn-primary:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #047857;
+    }
+
+    /* หน้าจอขณะเล่น */
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .stat-box {
+      background: #F8FAFC;
+      border: 2px solid #E2E8F0;
+      border-radius: 18px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text-dark);
+      line-height: 1.1;
+    }
+
+    .stat-value.timer-warning {
+      color: #EF4444;
+      animation: pulse 0.5s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.1); }
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 12px;
+      background: #E2E8F0;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #22C55E, #EAB308, #EF4444);
+      transition: width 0.1s linear;
+    }
+
+    /* ปุ่มสีทองขนาดใหญ่ */
+    .gold-button-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 20px 0 24px 0;
+      position: relative;
+      height: 230px;
+    }
+
+    .gold-button {
+      width: 210px;
+      height: 210px;
+      border-radius: 50%;
+      border: 6px solid #FFFBEB;
+      background: radial-gradient(circle at 35% 30%, var(--gold-top), var(--gold-mid) 55%, var(--gold-bot));
+      box-shadow:
+        0 14px 0 var(--gold-edge),
+        0 22px 30px rgba(245, 158, 11, 0.45),
+        inset 0 6px 12px rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      transition: transform 0.04s ease, box-shadow 0.04s ease;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .gold-button:active,
+    .gold-button.pressed {
+      transform: translateY(10px) scale(0.98);
+      box-shadow:
+        0 4px 0 var(--gold-edge),
+        0 10px 15px rgba(245, 158, 11, 0.35),
+        inset 0 4px 10px rgba(255, 255, 255, 0.7);
+    }
+
+    .gold-btn-icon {
+      font-size: 3rem;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .gold-btn-text {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #78350F;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+
+    .gold-btn-sub {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #92400E;
+    }
+
+    /* เอฟเฟกต์ตัวเลข +1 ลอยขึ้น */
+    .floating-plus {
+      position: absolute;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #D97706;
+      text-shadow: 0 2px 4px rgba(255, 255, 255, 0.9);
+      pointer-events: none;
+      animation: floatUp 0.55s ease-out forwards;
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-70px) scale(1.3); }
+    }
+
+    /* ตารางจัดอันดับ (Leaderboard) */
+    .leaderboard-section {
+      margin-top: 20px;
+      background: #F8FAFC;
+      border-radius: 20px;
+      padding: 16px;
+      border: 2px solid #E2E8F0;
+    }
+
+    .leaderboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .leaderboard-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text-dark);
+    }
+
+    .clear-btn {
+      background: none;
+      border: none;
+      color: #EF4444;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .leaderboard-list {
+      list-style: none;
+      max-height: 280px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      font-weight: 600;
+    }
+
+    .leaderboard-item.highlight {
+      background: #FEF3C7;
+      border-color: #F59E0B;
+    }
+
+    .rank-badge {
+      display: inline-flex;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      margin-right: 10px;
+      font-size: 0.9rem;
+      background: #E2E8F0;
+      color: #475569;
+    }
+
+    .rank-1 { background: #FFD700; color: #78350F; }
+    .rank-2 { background: #E2E8F0; color: #1E293B; }
+    .rank-3 { background: #FDBA74; color: #7C2D12; }
+
+    .player-info {
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .player-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 150px;
+    }
+
+    .player-score {
+      font-weight: 800;
+      color: #D97706;
+      font-size: 1.05rem;
+    }
+
+    /* สรุปผลคะแนน */
+    .result-box {
+      text-align: center;
+      background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
+      border: 2px solid #FDE68A;
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .result-score {
+      font-size: 3.4rem;
+      font-weight: 800;
+      color: #D97706;
+      line-height: 1;
+      margin: 8px 0;
+    }
+
+    .cps-badge {
+      display: inline-block;
+      background: #FFFFFF;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #B45309;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- แถบด้านบน -->
+    <div class="top-bar">
+      <span class="badge">⏱️ แข่งขัน 1 นาที (60 วินาที)</span>
+      <button id="soundToggleBtn" class="sound-btn" title="เปิด/ปิดเสียงเพลงและเอฟเฟกต์">🔊</button>
+    </div>
+
+    <!-- ปุ่มสลับหน้าผู้เล่น กับ หน้าแอดมิน -->
+    <div class="mode-tabs">
+      <button id="tabPlayerBtn" class="mode-tab active" type="button">🎮 โหมดผู้เข้าแข่งขัน</button>
+      <button id="tabAdminBtn" class="mode-tab" type="button">📊 หน้าจอแอดมิน (ดูผลรวม)</button>
+    </div>
+
+    <!-- ชื่อเกม -->
+    <div class="game-header">
+      <h1 class="game-title">HIGH SPEED FINGER</h1>
+      <p class="game-subtitle">ศึกดวลนิ้วไว กดปุ่มทองให้เร็วที่สุด!</p>
+      <div id="roomDisplayBadge" class="room-badge">🌐 ห้องแข่งขัน: MAIN</div>
+    </div>
+
+    <!-- หน้าจอที่ 1: ลงทะเบียนชื่อ -->
+    <div id="startScreen" class="screen active">
+      <div class="input-group">
+        <label for="playerNameInput" class="input-label">ใส่ชื่อผู้เข้าแข่งขัน:</label>
+        <input type="text" id="playerNameInput" class="name-input" placeholder="เช่น เทพนิ้วสายฟ้า..." maxlength="20">
+      </div>
+      <button id="startGameBtn" class="btn-primary">🚀 เริ่มการแข่งขัน!</button>
+
+      <!-- ตารางอันดับหน้าแรก -->
+      <div class="leaderboard-section">
+        <div class="leaderboard-header">
+          <span class="leaderboard-title">🏆 อันดับสูงสุด (<span id="homePlayerCount">0</span> คน - ไม่จำกัด)</span>
+          <button id="clearBoardBtn1" class="clear-btn">ล้างข้อมูล</button>
+        </div>
+        <ul id="homeLeaderboard" class="leaderboard-list"></ul>
+      </div>
+    </div>
+
+    <!-- หน้าจอที่ 2: กำลังแข่งขัน -->
+    <div id="gameScreen" class="screen">
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-label">เวลาที่เหลือ (วินาที)</div>
+          <div id="timeDisplay" class="stat-value">60.0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">คะแนนที่กดได้</div>
+          <div id="scoreDisplay" class="stat-value">0</div>
+        </div>
+      </div>
+
+      <div class="progress-bar-bg">
+        <div id="progressBar" class="progress-bar-fill"></div>
+      </div>
+
+      <!-- ปุ่มสีทอง 1 ปุ่ม -->
+      <div id="buttonContainer" class="gold-button-wrapper">
+        <button id="goldBtn" class="gold-button" type="button">
+          <span class="gold-btn-icon">👆</span>
+          <span class="gold-btn-text">กดรัวๆ!</span>
+          <span id="playerActiveLabel" class="gold-btn-sub">ผู้เล่น</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- หน้าจอที่ 3: สรุปผลและตารางคะแนน -->
+    <div id="resultScreen" class="screen">
+      <div class="result-box">
+        <div id="finalPlayerName" style="font-weight: 800; font-size: 1.2rem;">ยอดเยี่ยมมาก!</div>
+        <div id="finalScore" class="result-score">0</div>
+        <div style="font-weight: 600; margin-bottom: 8px;">ครั้ง ในเวลา 1 นาที</div>
+        <span id="finalCps" class="cps-badge">ความเร็วเฉลี่ย 0.0 ครั้ง/วินาที</span>
+      </div>
+
+      <button id="playAgainBtn" class="btn-primary">🔄 แข่งอีกครั้ง / คนถัดไป</button>
+
+      <div class="leaderboard-section">
+        <div class="leaderboard-header">
+          <span class="leaderboard-title">🏆 อันดับทั้งหมด (<span id="resultPlayerCount">0</span> คน)</span>
+          <button id="clearBoardBtn2" class="clear-btn">ล้างข้อมูล</button>
+        </div>
+        <ul id="resultLeaderboard" class="leaderboard-list"></ul>
+      </div>
+    </div>
+
+    <!-- หน้าจอที่ 4: หน้าจอแอดมิน (Admin Dashboard & QR Code) -->
+    <div id="adminScreen" class="screen">
+      <div class="qr-box">
+        <div style="font-weight: 800; font-size: 1rem; color: #1E293B;">📱 สแกน QR Code เพื่อเข้าแข่งพร้อมกัน</div>
+        <div style="font-size: 0.8rem; color: #64748B;">ผู้เล่นทุกคนที่สแกนจะส่งคะแนนเข้าหน้าแอดมินนี้อัตโนมัติ</div>
+        <img id="qrCodeImg" src="" alt="QR Code สำหรับเข้าเล่นเกม">
+        <div id="shareUrlText" style="font-size: 0.75rem; color: #475569; word-break: break-all; margin-bottom: 8px;"></div>
+        <button id="copyLinkBtn" class="btn-secondary" type="button" style="width: 100%;">🔗 คัดลอกลิงก์ห้องแข่งขัน</button>
+      </div>
+
+      <div class="room-input-row">
+        <input type="text" id="roomCodeInput" class="room-input" placeholder="ตั้งรหัสห้อง เช่น ROOM1" maxlength="15">
+        <button id="changeRoomBtn" class="btn-secondary" type="button">เปลี่ยนห้อง</button>
+      </div>
+
+      <div class="leaderboard-section" style="margin-top: 10px;">
+        <div class="leaderboard-header">
+          <span class="leaderboard-title">👑 กระดานคะแนนสดแอดมิน (<span id="adminPlayerCount">0</span> คน)</span>
+          <button id="clearBoardBtnAdmin" class="clear-btn">ล้างข้อมูลห้องนี้</button>
+        </div>
+        <ul id="adminLeaderboard" class="leaderboard-list" style="max-height: 320px;"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // ระบบเสียงเอฟเฟกต์และเพลงประกอบ (Web Audio API)
+    // ==========================================
+    let soundEnabled = true;
+    let audioCtx = null;
+    let bgmInterval = null;
+    let bgmStep = 0;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // ฟังก์ชันเล่นเพลงประกอบจังหวะสนุกๆ (Arcade Upbeat BGM) ระหว่างเล่นเกม
+    function startBackgroundMusic() {
+      stopBackgroundMusic();
+      if (!soundEnabled) return;
+      initAudio();
+      bgmStep = 0;
+      const melody = [
+        261.63, 329.63, 392.00, 523.25,
+        392.00, 329.63, 293.66, 392.00,
+        261.63, 329.63, 392.00, 523.25,
+        587.33, 523.25, 392.00, 329.63
+      ];
+      bgmInterval = setInterval(() => {
+        if (!soundEnabled || !isPlaying) return;
+        initAudio();
+        const freq = melody[bgmStep % melody.length];
+        // เร่งระดับเสียงขึ้นเมื่อเหลือเวลา <= 10 วินาทีสุดท้าย
+        const pitchMultiplier = timeLeft <= 10 ? 1.122 : 1.0;
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq * pitchMultiplier, audioCtx.currentTime);
+
+        gain.gain.setValueAtTime(0.045, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.14);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.15);
+        bgmStep++;
+      }, 160);
+    }
+
+    function stopBackgroundMusic() {
+      if (bgmInterval) {
+        clearInterval(bgmInterval);
+        bgmInterval = null;
+      }
+    }
+
+    function playTapSound() {
+      if (!soundEnabled) return;
+      initAudio();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(520 + Math.random() * 180, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.045);
+
+      gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.045);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.05);
+    }
+
+    function playStartSound() {
+      if (!soundEnabled) return;
+      initAudio();
+      const notes = [440, 554.37, 659.25, 880];
+      notes.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.07);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime + idx * 0.07);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.07 + 0.15);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + idx * 0.07);
+        osc.stop(audioCtx.currentTime + idx * 0.07 + 0.16);
+      });
+    }
+
+    function playFinishSound() {
+      if (!soundEnabled) return;
+      initAudio();
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.1);
+        gain.gain.setValueAtTime(0.25, audioCtx.currentTime + idx * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.1 + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + idx * 0.1);
+        osc.stop(audioCtx.currentTime + idx * 0.1 + 0.36);
+      });
+    }
+
+    // ==========================================
+    // ตัวแปรควบคุมเกม & ระบบซิงค์หลายเครื่อง (Cloud Room Sync)
+    // ==========================================
+    const GAME_DURATION = 60; // 60 วินาที (1 นาที)
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentRoom = (urlParams.get('room') || 'MAIN').toUpperCase();
+    const isAdminInitial = urlParams.get('admin') === '1';
+
+    let STORAGE_KEY = 'high_speed_finger_room_' + currentRoom;
+    let currentPlayer = '';
+    let currentSessionId = null;
+    let score = 0;
+    let timeLeft = GAME_DURATION;
+    let timerInterval = null;
+    let isPlaying = false;
+    let lastRecordId = null;
+    let remotePlayersMap = {};
+
+    // เชื่อมต่อ GunDB Relay สาธารณะเพื่อซิงค์คะแนนทุกเครื่องเข้าหน้าแอดมินอัตโนมัติ
+    let gun = null;
+    let roomNode = null;
+    try {
+      if (typeof Gun !== 'undefined') {
+        gun = Gun([
+          'https://gun-manhattan.herokuapp.com/gun',
+          'https://peer.wallie.io/gun'
+        ]);
+      }
+    } catch (e) {
+      console.warn('Offline / Local mode active');
+    }
+
+    // อ้างอิง DOM
+    const startScreen = document.getElementById('startScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const resultScreen = document.getElementById('resultScreen');
+    const adminScreen = document.getElementById('adminScreen');
+
+    const tabPlayerBtn = document.getElementById('tabPlayerBtn');
+    const tabAdminBtn = document.getElementById('tabAdminBtn');
+    const roomDisplayBadge = document.getElementById('roomDisplayBadge');
+    const qrCodeImg = document.getElementById('qrCodeImg');
+    const shareUrlText = document.getElementById('shareUrlText');
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    const roomCodeInput = document.getElementById('roomCodeInput');
+    const changeRoomBtn = document.getElementById('changeRoomBtn');
+
+    const playerNameInput = document.getElementById('playerNameInput');
+    const startGameBtn = document.getElementById('startGameBtn');
+    const soundToggleBtn = document.getElementById('soundToggleBtn');
+
+    const timeDisplay = document.getElementById('timeDisplay');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const progressBar = document.getElementById('progressBar');
+    const goldBtn = document.getElementById('goldBtn');
+    const buttonContainer = document.getElementById('buttonContainer');
+    const playerActiveLabel = document.getElementById('playerActiveLabel');
+
+    const finalPlayerName = document.getElementById('finalPlayerName');
+    const finalScore = document.getElementById('finalScore');
+    const finalCps = document.getElementById('finalCps');
+    const playAgainBtn = document.getElementById('playAgainBtn');
+
+    const homeLeaderboard = document.getElementById('homeLeaderboard');
+    const resultLeaderboard = document.getElementById('resultLeaderboard');
+    const adminLeaderboard = document.getElementById('adminLeaderboard');
+    const homePlayerCount = document.getElementById('homePlayerCount');
+    const resultPlayerCount = document.getElementById('resultPlayerCount');
+    const adminPlayerCount = document.getElementById('adminPlayerCount');
+    const clearBoardBtn1 = document.getElementById('clearBoardBtn1');
+    const clearBoardBtn2 = document.getElementById('clearBoardBtn2');
+    const clearBoardBtnAdmin = document.getElementById('clearBoardBtnAdmin');
+
+    // ==========================================
+    // ฟังก์ชันจัดการตารางคะแนน & ซิงค์ข้อมูลออนไลน์เข้าหน้าแอดมิน
+    // ==========================================
+    function subscribeRoom(roomCode) {
+      currentRoom = roomCode.toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'MAIN';
+      STORAGE_KEY = 'high_speed_finger_room_' + currentRoom;
+      roomDisplayBadge.textContent = `🌐 ห้องแข่งขัน: ${currentRoom}`;
+      roomCodeInput.value = currentRoom;
+      remotePlayersMap = {};
+
+      // โหลดข้อมูลในเครื่องก่อน
+      try {
+        const localRaw = localStorage.getItem(STORAGE_KEY);
+        const localArr = localRaw ? JSON.parse(localRaw) : [];
+        localArr.forEach(item => {
+          remotePlayersMap[item.id] = item;
+        });
+      } catch (e) {}
+
+      // อัปเดต QR Code และลิงก์สำหรับแชร์ให้ผู้เล่นสแกน
+      const baseUrl = window.location.href.split('?')[0];
+      const playerJoinUrl = `${baseUrl}?room=${encodeURIComponent(currentRoom)}`;
+      shareUrlText.textContent = playerJoinUrl;
+      qrCodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(playerJoinUrl)}`;
+
+      // ซิงค์ข้อมูลแบบเรียลไทม์จากทุกเครื่องด้วย GunDB
+      if (gun) {
+        roomNode = gun.get('hsf_game_2025_room_' + currentRoom).get('players');
+        roomNode.map().on((data, key) => {
+          if (!data || data.deleted) {
+            delete remotePlayersMap[key];
+          } else if (data.name && typeof data.score === 'number') {
+            remotePlayersMap[key] = {
+              id: key,
+              name: data.name,
+              score: data.score,
+              cps: data.cps || (data.score / GAME_DURATION).toFixed(2),
+              status: data.status || 'finished'
+            };
+          }
+          persistLocalCache();
+          renderAllLeaderboards();
+        });
+      }
+      renderAllLeaderboards();
+    }
+
+    function persistLocalCache() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(getLeaderboard()));
+      } catch (e) {}
+    }
+
+    function getLeaderboard() {
+      const list = Object.values(remotePlayersMap);
+      list.sort((a, b) => b.score - a.score);
+      return list;
+    }
+
+    function syncPlayerScore(id, name, playerScore, statusText) {
+      const record = {
+        id: String(id),
+        name,
+        score: playerScore,
+        cps: (playerScore / GAME_DURATION).toFixed(2),
+        status: statusText || 'finished',
+        updatedAt: Date.now()
+      };
+      remotePlayersMap[record.id] = record;
+      persistLocalCache();
+      if (roomNode) {
+        roomNode.get(record.id).put(record);
+      }
+      renderAllLeaderboards();
+    }
+
+    function saveScore(name, playerScore) {
+      const id = currentSessionId || ('p_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6));
+      lastRecordId = String(id);
+      syncPlayerScore(lastRecordId, name, playerScore, 'finished');
+    }
+
+    function renderAllLeaderboards() {
+      renderLeaderboard(homeLeaderboard);
+      renderLeaderboard(resultLeaderboard);
+      renderLeaderboard(adminLeaderboard);
+    }
+
+    function renderLeaderboard(targetUl) {
+      if (!targetUl) return;
+      const list = getLeaderboard();
+      targetUl.innerHTML = '';
+
+      if (homePlayerCount) homePlayerCount.textContent = list.length.toLocaleString();
+      if (resultPlayerCount) resultPlayerCount.textContent = list.length.toLocaleString();
+      if (adminPlayerCount) adminPlayerCount.textContent = list.length.toLocaleString();
+
+      if (list.length === 0) {
+        targetUl.innerHTML = '<li style="text-align:center; color:#94A3B8; padding:12px;">ยังไม่มีรายชื่อผู้เข้าแข่งขัน (รองรับไม่จำกัดจำนวนคน)</li>';
+        return;
+      }
+
+      list.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.className = 'leaderboard-item' + (String(item.id) === String(lastRecordId) ? ' highlight' : '');
+
+        let rankClass = '';
+        let medal = index + 1;
+        if (index === 0) { rankClass = 'rank-1'; medal = '🥇'; }
+        else if (index === 1) { rankClass = 'rank-2'; medal = '🥈'; }
+        else if (index === 2) { rankClass = 'rank-3'; medal = '🥉'; }
+
+        const liveBadge = item.status === 'playing'
+          ? '<span class="status-playing">กำลังกดสดๆ ⚡</span>'
+          : '';
+
+        li.innerHTML = `
+          <div class="player-info">
+            <span class="rank-badge ${rankClass}">${medal}</span>
+            <span class="player-name">${escapeHtml(item.name)}</span>
+            ${liveBadge}
+          </div>
+          <div class="player-score">${item.score.toLocaleString()} ครั้ง</div>
+        `;
+        targetUl.appendChild(li);
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, function(m) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
+      });
+    }
+
+    function clearLeaderboard() {
+      if (confirm(`ต้องการล้างรายชื่อและคะแนนทั้งหมดในห้อง "${currentRoom}" ใช่หรือไม่?`)) {
+        Object.keys(remotePlayersMap).forEach(key => {
+          if (roomNode) {
+            roomNode.get(key).put({ deleted: true });
+          }
+        });
+        remotePlayersMap = {};
+        localStorage.removeItem(STORAGE_KEY);
+        lastRecordId = null;
+        renderAllLeaderboards();
+      }
+    }
+
+    // ==========================================
+    // ฟังก์ชันควบคุมการเล่นเกม
+    // ==========================================
+    function switchScreen(screenEl) {
+      [startScreen, gameScreen, resultScreen, adminScreen].forEach(s => s.classList.remove('active'));
+      screenEl.classList.add('active');
+    }
+
+    function startGame() {
+      const name = playerNameInput.value.trim();
+      if (!name) {
+        alert('กรุณาใส่ชื่อผู้เข้าแข่งขันก่อนเริ่มเกมครับ!');
+        playerNameInput.focus();
+        return;
+      }
+
+      currentPlayer = name;
+      currentSessionId = 'p_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+      lastRecordId = currentSessionId;
+      score = 0;
+      timeLeft = GAME_DURATION;
+      isPlaying = true;
+
+      scoreDisplay.textContent = '0';
+      timeDisplay.textContent = GAME_DURATION.toFixed(1);
+      timeDisplay.classList.remove('timer-warning');
+      progressBar.style.width = '100%';
+      playerActiveLabel.textContent = currentPlayer;
+
+      playStartSound();
+      startBackgroundMusic();
+      switchScreen(gameScreen);
+      syncPlayerScore(currentSessionId, currentPlayer, 0, 'playing');
+
+      const startTime = performance.now();
+      let lastSyncSecond = 0;
+      timerInterval = setInterval(() => {
+        const elapsed = (performance.now() - startTime) / 1000;
+        timeLeft = Math.max(0, GAME_DURATION - elapsed);
+        timeDisplay.textContent = timeLeft.toFixed(1);
+        progressBar.style.width = `${(timeLeft / GAME_DURATION) * 100}%`;
+
+        // ซิงค์คะแนนสดๆ เข้าหน้าแอดมินทุกๆ 1 วินาทีระหว่างกด
+        const wholeSec = Math.floor(elapsed);
+        if (wholeSec > lastSyncSecond) {
+          lastSyncSecond = wholeSec;
+          syncPlayerScore(currentSessionId, currentPlayer, score, 'playing');
+        }
+
+        if (timeLeft <= 10) {
+          timeDisplay.classList.add('timer-warning');
+        }
+
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 50);
+    }
+
+    function handleGoldButtonTap(e) {
+      if (!isPlaying) return;
+      e.preventDefault();
+
+      score++;
+      scoreDisplay.textContent = score.toLocaleString();
+      playTapSound();
+
+      // เอฟเฟกต์ยุบปุ่ม
+      goldBtn.classList.add('pressed');
+      setTimeout(() => goldBtn.classList.remove('pressed'), 50);
+
+      // สร้างตัวเลข +1 ลอยขึ้น
+      const plus = document.createElement('span');
+      plus.className = 'floating-plus';
+      plus.textContent = '+1';
+
+      const randX = (Math.random() - 0.5) * 110;
+      const randY = (Math.random() - 0.5) * 60;
+      plus.style.left = `calc(50% + ${randX}px)`;
+      plus.style.top = `calc(40% + ${randY}px)`;
+
+      buttonContainer.appendChild(plus);
+      setTimeout(() => plus.remove(), 550);
+    }
+
+    function endGame() {
+      isPlaying = false;
+      clearInterval(timerInterval);
+      stopBackgroundMusic();
+      playFinishSound();
+
+      saveScore(currentPlayer, score);
+
+      finalPlayerName.textContent = `ผู้เล่น: ${currentPlayer}`;
+      finalScore.textContent = score.toLocaleString();
+      finalCps.textContent = `ความเร็วเฉลี่ย ${(score / GAME_DURATION).toFixed(2)} ครั้ง/วินาที`;
+
+      renderAllLeaderboards();
+      switchScreen(resultScreen);
+    }
+
+    // ==========================================
+    // การผูก Event Listeners
+    // ==========================================
+    startGameBtn.addEventListener('click', startGame);
+
+    playerNameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') startGame();
+    });
+
+    // ใช้ pointerdown เพื่อตอบสนองการแตะบนจอมือถือได้เร็วที่สุด
+    goldBtn.addEventListener('pointerdown', handleGoldButtonTap);
+
+    playAgainBtn.addEventListener('click', () => {
+      playerNameInput.value = '';
+      switchScreen(startScreen);
+      playerNameInput.focus();
+    });
+
+    soundToggleBtn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      soundToggleBtn.textContent = soundEnabled ? '🔊' : '🔇';
+      if (!soundEnabled) {
+        stopBackgroundMusic();
+      } else if (isPlaying) {
+        startBackgroundMusic();
+      }
+    });
+
+    tabPlayerBtn.addEventListener('click', () => {
+      tabPlayerBtn.classList.add('active');
+      tabAdminBtn.classList.remove('active');
+      if (!isPlaying) switchScreen(startScreen);
+    });
+
+    tabAdminBtn.addEventListener('click', () => {
+      tabAdminBtn.classList.add('active');
+      tabPlayerBtn.classList.remove('active');
+      if (!isPlaying) switchScreen(adminScreen);
+    });
+
+    changeRoomBtn.addEventListener('click', () => {
+      const newRoom = roomCodeInput.value.trim();
+      if (newRoom) {
+        subscribeRoom(newRoom);
+      }
+    });
+
+    copyLinkBtn.addEventListener('click', () => {
+      const urlToCopy = shareUrlText.textContent;
+      navigator.clipboard.writeText(urlToCopy).then(() => {
+        alert('คัดลอกลิงก์สำหรับส่งให้ผู้เข้าแข่งขันเรียบร้อยแล้ว!');
+      }).catch(() => {
+        prompt('คัดลอกลิงก์ด้านล่างนี้:', urlToCopy);
+      });
+    });
+
+    clearBoardBtn1.addEventListener('click', clearLeaderboard);
+    clearBoardBtn2.addEventListener('click', clearLeaderboard);
+    clearBoardBtnAdmin.addEventListener('click', clearLeaderboard);
+
+    // เริ่มต้นเชื่อมต่อห้องแข่งขันและโหลดตารางอันดับ
+    subscribeRoom(currentRoom);
+    if (isAdminInitial) {
+      tabAdminBtn.click();
+    }
+  </script>
+</body>
+</html>
