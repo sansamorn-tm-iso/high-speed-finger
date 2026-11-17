@@ -563,25 +563,12 @@
       cursor: pointer;
     }
 
-    .btn-admin-cheer {
-      padding: 18px 20px;
-      font-size: 1.2rem;
-      font-weight: 800;
-      color: #FFFFFF;
-      background: linear-gradient(135deg, #3B82F6, #06B6D4);
-      border: none;
-      border-radius: 18px;
-      box-shadow: 0 6px 0 #0E7490;
-      cursor: pointer;
-    }
-
     .btn-admin-start:active,
-    .btn-admin-reveal:active,
-    .btn-admin-cheer:active {
+    .btn-admin-reveal:active {
       transform: translateY(4px);
     }
 
-    /* ตารางจัดอันดับ (แสดงเฉพาะในหน้าแอดมินเมื่อกดโชว์คะแนน) */
+    /* ตารางรายชื่อผู้เข้าแข่งขันและอันดับคะแนน (แสดงรายชื่อครบทุกคนและมีแถบเลื่อนชัดเจน) */
     .leaderboard-section {
       background: #FFFFFF;
       border-radius: 22px;
@@ -593,11 +580,13 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
       margin-bottom: 14px;
     }
 
     .leaderboard-title {
-      font-size: 1.4rem;
+      font-size: 1.35rem;
       font-weight: 800;
       color: var(--text-dark);
     }
@@ -615,15 +604,42 @@
 
     .leaderboard-list {
       list-style: none;
-      max-height: 500px;
-      overflow-y: auto;
-      padding-right: 6px;
+      max-height: 520px;
+      min-height: 260px;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      padding-right: 10px;
+      touch-action: pan-y;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: auto;
+      scrollbar-color: #A855F7 #F3E8FF;
+    }
+
+    /* แถบเลื่อน (Scrollbar) ขนาดใหญ่เห็นชัดเจน เลื่อนง่าย */
+    .leaderboard-list::-webkit-scrollbar {
+      width: 12px;
+    }
+
+    .leaderboard-list::-webkit-scrollbar-track {
+      background: #F3E8FF;
+      border-radius: 999px;
+    }
+
+    .leaderboard-list::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #EC4899, #8B5CF6, #3B82F6);
+      border-radius: 999px;
+      border: 2px solid #F3E8FF;
+    }
+
+    .leaderboard-list::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, #DB2777, #7C3AED, #2563EB);
     }
 
     .leaderboard-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
       padding: 14px 18px;
       border-radius: 16px;
       margin-bottom: 10px;
@@ -631,24 +647,25 @@
       border: 2px solid #E2E8F0;
       font-weight: 800;
       font-size: 1.15rem;
-      animation: fadeIn 0.3s ease;
+      touch-action: pan-y;
+      animation: fadeIn 0.25s ease;
     }
 
     .leaderboard-item.rank-top-1 {
       background: linear-gradient(90deg, #FEF9C3, #FDE047);
       border-color: #EAB308;
-      transform: scale(1.01);
     }
 
     .rank-badge {
       display: inline-flex;
-      width: 38px;
-      height: 38px;
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      margin-right: 14px;
+      margin-right: 12px;
       font-size: 1.1rem;
       background: #E2E8F0;
       color: #475569;
@@ -661,21 +678,33 @@
     .player-info {
       display: flex;
       align-items: center;
-      overflow: hidden;
+      flex: 1;
+      min-width: 0;
+      flex-wrap: wrap;
+      gap: 4px;
     }
 
     .player-name {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 380px;
+      word-break: break-word;
+      overflow-wrap: anywhere;
       font-size: 1.25rem;
+      color: #1E1B4B;
     }
 
     .player-score {
+      flex-shrink: 0;
       font-weight: 800;
       color: #DB2777;
-      font-size: 1.4rem;
+      font-size: 1.35rem;
+      text-align: right;
+    }
+
+    .score-masked {
+      color: #7C3AED;
+      background: #F3E8FF;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.95rem;
     }
 
     .status-playing {
@@ -684,7 +713,7 @@
       color: #15803D;
       padding: 3px 10px;
       border-radius: 999px;
-      margin-left: 10px;
+      margin-left: 6px;
     }
 
     .status-ready {
@@ -693,16 +722,28 @@
       color: #4338CA;
       padding: 3px 10px;
       border-radius: 999px;
-      margin-left: 10px;
+      margin-left: 6px;
+    }
+
+    .status-finished {
+      font-size: 0.85rem;
+      background: #FCE7F3;
+      color: #BE185D;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-left: 6px;
     }
 
     .hidden-score-placeholder {
       text-align: center;
-      padding: 42px 20px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
       background: linear-gradient(135deg, #FAF5FF, #FFF1F2);
-      border-radius: 18px;
+      border-radius: 14px;
       border: 2px dashed #F472B6;
       color: #831843;
+      font-size: 0.95rem;
+      font-weight: 600;
     }
   </style>
 </head>
@@ -821,25 +862,20 @@
           <div class="admin-action-buttons">
             <button id="adminStartGameBtn" class="btn-admin-start" type="button">🚀 กดเริ่มเกมพร้อมกันทุกคน!</button>
             <button id="adminRevealScoreBtn" class="btn-admin-reveal" type="button">🏆 กดโชว์คะแนน & ประกาศผล!</button>
-            <button id="adminCheerSoundBtn" class="btn-admin-cheer" type="button">👏 เสียงปรบมือ & วี้ดวิ้ว!</button>
           </div>
 
-          <!-- ส่วนแสดงผลคะแนน (ซ่อนคะแนนไว้จนกว่าแอดมินจะกดโชว์คะแนน) -->
+          <!-- ส่วนแสดงรายชื่อผู้เข้าแข่งขันครบทุกคนพร้อมแถบเลื่อน (แสดงรายชื่อตลอดเวลา และเปิดเผยคะแนนเมื่อกดโชว์คะแนน) -->
           <div class="leaderboard-section">
             <div class="leaderboard-header">
-              <span id="adminBoardTitle" class="leaderboard-title">👑 รายชื่อผู้เข้าแข่งขันและอันดับคะแนน</span>
+              <span id="adminBoardTitle" class="leaderboard-title">👑 รายชื่อผู้เข้าแข่งขันทั้งหมด (<span id="adminListCount">0</span> คน)</span>
               <button id="clearBoardBtnAdmin" class="clear-btn" type="button">🗑️ ล้างข้อมูลเริ่มรอบใหม่</button>
             </div>
 
             <div id="scoreHiddenNotice" class="hidden-score-placeholder">
-              <div style="font-size: 2.4rem; margin-bottom: 6px;">🙈✨</div>
-              <div style="font-size: 1.25rem; font-weight: 800;">กำลังซ่อนผลคะแนนเพื่อความตื่นเต้น!</div>
-              <div style="font-size: 0.95rem; font-weight: 600; margin-top: 4px;">
-                เมื่อแข่งขันครบ 1 นาที กดปุ่ม <b>"🏆 กดโชว์คะแนน & ประกาศผล!"</b> ด้านบนเพื่อเปิดเผยอันดับพร้อมเสียงปรบมือและเสียงวี้ดวิ้ว!
-              </div>
+              🙈✨ <b>แสดงรายชื่อผู้เข้าแข่งขันครบทุกคนแล้ว!</b> (ซ่อนตัวเลขคะแนนไว้ชั่วคราว — กดปุ่ม <b>"🏆 กดโชว์คะแนน & ประกาศผล!"</b> ด้านบนเพื่อเปิดเผยคะแนนและจัดอันดับพร้อมเสียงเฮดีใจปรบมือ!)
             </div>
 
-            <ul id="adminLeaderboard" class="leaderboard-list" style="display: none;"></ul>
+            <ul id="adminLeaderboard" class="leaderboard-list"></ul>
           </div>
         </div>
       </div>
@@ -960,16 +996,91 @@
       });
     }
 
-    // เสียงปรบมือรัวๆ + เสียงผิวปากวี้ดวิ้ว + แตรฉลองชัยชนะ!
-    function playApplauseAndWhistleSound() {
+    // เสียงเฮดีใจ (Crowd Cheer "เฮ้! / เย้!") + เสียงปรบมือรัวๆ + แตรฉลองชัยชนะ!
+    function playCheerAndApplauseSound() {
       if (!soundEnabled) return;
       initAudio();
       const now = audioCtx.currentTime;
 
-      // 1. สังเคราะห์เสียงปรบมือรัวๆ (Crowd Applause Claps)
-      for (let i = 0; i < 48; i++) {
-        const clapTime = now + (i * 0.055) + (Math.random() * 0.035);
-        const bufferSize = audioCtx.sampleRate * 0.075;
+      // 1. สังเคราะห์เสียงกลุ่มคนร้อง "เฮ้!! / เย้!!" ดีใจ (Multi-Voice Formant Crowd Cheer + Roar)
+      const cheerDuration = 2.8;
+      const roarSize = Math.floor(audioCtx.sampleRate * cheerDuration);
+      const roarBuffer = audioCtx.createBuffer(1, roarSize, audioCtx.sampleRate);
+      const roarData = roarBuffer.getChannelData(0);
+      let lastOut = 0.0;
+      for (let i = 0; i < roarSize; i++) {
+        // สร้าง Pink/Brownian Noise ที่มีความทุ้มนุ่มเหมือนเสียงฮือฮาของกลุ่มคนจำนวนมาก
+        const white = Math.random() * 2 - 1;
+        roarData[i] = (lastOut + (0.04 * white)) / 1.04;
+        lastOut = roarData[i];
+        roarData[i] *= 2.8;
+      }
+
+      const roarSource = audioCtx.createBufferSource();
+      roarSource.buffer = roarBuffer;
+
+      const roarFilter = audioCtx.createBiquadFilter();
+      roarFilter.type = 'bandpass';
+      roarFilter.frequency.setValueAtTime(550, now);
+      roarFilter.frequency.linearRampToValueAtTime(950, now + 0.6);
+      roarFilter.frequency.exponentialRampToValueAtTime(650, now + cheerDuration);
+      roarFilter.Q.setValueAtTime(1.2, now);
+
+      const roarGain = audioCtx.createGain();
+      roarGain.gain.setValueAtTime(0.001, now);
+      roarGain.gain.linearRampToValueAtTime(0.32, now + 0.25);
+      roarGain.gain.setValueAtTime(0.30, now + 1.5);
+      roarGain.gain.exponentialRampToValueAtTime(0.001, now + cheerDuration);
+
+      roarSource.connect(roarFilter);
+      roarFilter.connect(roarGain);
+      roarGain.connect(audioCtx.destination);
+      roarSource.start(now);
+      roarSource.stop(now + cheerDuration);
+
+      // เสียงประสานคนร้อง "เฮ้! เย้!" หลายระดับเสียงพร้อมกัน (Vocal Formant Voices)
+      const voiceBaseFreqs = [190, 225, 270, 320, 380, 440];
+      voiceBaseFreqs.forEach((baseFreq, vIdx) => {
+        const vStart = now + (vIdx * 0.04);
+        const osc = audioCtx.createOscillator();
+        const f1 = audioCtx.createBiquadFilter();
+        const f2 = audioCtx.createBiquadFilter();
+        const vGain = audioCtx.createGain();
+
+        osc.type = 'sawtooth';
+        // ลากเสียงขึ้นเหมือนคนร้อง "เฮ้!!!" ด้วยความดีใจ
+        osc.frequency.setValueAtTime(baseFreq * 0.92, vStart);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.25, vStart + 0.35);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.15, vStart + 1.6);
+
+        // Formant Filters จำลองเสียงสระ "เอ / อา" (Yeah / Hey!)
+        f1.type = 'bandpass';
+        f1.frequency.setValueAtTime(650, vStart);
+        f1.Q.setValueAtTime(4.0, vStart);
+
+        f2.type = 'bandpass';
+        f2.frequency.setValueAtTime(1850, vStart);
+        f2.Q.setValueAtTime(4.5, vStart);
+
+        vGain.gain.setValueAtTime(0.001, vStart);
+        vGain.gain.linearRampToValueAtTime(0.12, vStart + 0.15);
+        vGain.gain.setValueAtTime(0.10, vStart + 1.1);
+        vGain.gain.exponentialRampToValueAtTime(0.001, vStart + 1.9);
+
+        osc.connect(f1);
+        osc.connect(f2);
+        f1.connect(vGain);
+        f2.connect(vGain);
+        vGain.connect(audioCtx.destination);
+
+        osc.start(vStart);
+        osc.stop(vStart + 1.95);
+      });
+
+      // 2. สังเคราะห์เสียงปรบมือรัวๆ (Crowd Applause Claps)
+      for (let i = 0; i < 60; i++) {
+        const clapTime = now + (i * 0.045) + (Math.random() * 0.035);
+        const bufferSize = Math.floor(audioCtx.sampleRate * 0.075);
         const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const output = noiseBuffer.getChannelData(0);
         for (let j = 0; j < bufferSize; j++) {
@@ -981,11 +1092,11 @@
 
         const filter = audioCtx.createBiquadFilter();
         filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(1100 + Math.random() * 700, clapTime);
-        filter.Q.setValueAtTime(1.8, clapTime);
+        filter.frequency.setValueAtTime(1000 + Math.random() * 650, clapTime);
+        filter.Q.setValueAtTime(1.6, clapTime);
 
         const gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(0.26, clapTime);
+        gain.gain.setValueAtTime(0.28, clapTime);
         gain.gain.exponentialRampToValueAtTime(0.001, clapTime + 0.07);
 
         whiteNoise.connect(filter);
@@ -996,44 +1107,19 @@
         whiteNoise.stop(clapTime + 0.075);
       }
 
-      // 2. เสียงวี้ดวิ้ว! (Two-tone Cheering Whistles)
-      const whistleTimes = [0.15, 0.95, 1.75];
-      whistleTimes.forEach((offset) => {
-        const wStart = now + offset;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        // กวาดความถี่เสียงผิวปาก วี้ด-วิ้ว!
-        osc.frequency.setValueAtTime(1450, wStart);
-        osc.frequency.linearRampToValueAtTime(2450, wStart + 0.18);
-        osc.frequency.setValueAtTime(1600, wStart + 0.22);
-        osc.frequency.exponentialRampToValueAtTime(2750, wStart + 0.45);
-        osc.frequency.exponentialRampToValueAtTime(2100, wStart + 0.62);
-
-        gain.gain.setValueAtTime(0.001, wStart);
-        gain.gain.linearRampToValueAtTime(0.22, wStart + 0.05);
-        gain.gain.setValueAtTime(0.22, wStart + 0.5);
-        gain.gain.exponentialRampToValueAtTime(0.001, wStart + 0.65);
-
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(wStart);
-        osc.stop(wStart + 0.66);
-      });
-
-      // 3. เสียงแตรแฟนแฟร์ฉลองแชมป์
-      const fanfare = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+      // 3. เสียงคอร์ดแตรแฟนแฟร์ฉลองชัยชนะสดใส
+      const fanfare = [523.25, 659.25, 783.99, 1046.5];
       fanfare.forEach((freq, idx) => {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, now + idx * 0.09);
-        gain.gain.setValueAtTime(0.2, now + idx * 0.09);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.4);
+        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+        gain.gain.setValueAtTime(0.18, now + idx * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.55);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
-        osc.start(now + idx * 0.09);
-        osc.stop(now + idx * 0.09 + 0.42);
+        osc.start(now + idx * 0.08);
+        osc.stop(now + idx * 0.08 + 0.58);
       });
     }
 
@@ -1097,10 +1183,10 @@
 
     const adminLeaderboard = document.getElementById('adminLeaderboard');
     const adminPlayerCount = document.getElementById('adminPlayerCount');
+    const adminListCount = document.getElementById('adminListCount');
     const adminTimerDisplay = document.getElementById('adminTimerDisplay');
     const adminStartGameBtn = document.getElementById('adminStartGameBtn');
     const adminRevealScoreBtn = document.getElementById('adminRevealScoreBtn');
-    const adminCheerSoundBtn = document.getElementById('adminCheerSoundBtn');
     const scoreHiddenNotice = document.getElementById('scoreHiddenNotice');
     const clearBoardBtnAdmin = document.getElementById('clearBoardBtnAdmin');
 
@@ -1262,17 +1348,25 @@
 
     function getLeaderboard() {
       const list = Object.values(remotePlayersMap);
-      list.sort((a, b) => b.score - a.score);
+      if (isScoreRevealed) {
+        // เมื่อกดโชว์คะแนนแล้ว ให้เรียงจากคะแนนมากสุดไปน้อยสุด
+        list.sort((a, b) => b.score - a.score);
+      } else {
+        // ก่อนกดโชว์คะแนน ให้แสดงรายชื่อผู้เล่นครบทุกคนเรียงตามลำดับที่เข้ามา
+        list.sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
+      }
       return list;
     }
 
     function syncPlayerScore(id, name, playerScore, statusText) {
+      const existing = remotePlayersMap[String(id)];
       const record = {
         id: String(id),
         name,
         score: playerScore,
         cps: (playerScore / GAME_DURATION).toFixed(2),
         status: statusText || 'finished',
+        joinedAt: existing && existing.joinedAt ? existing.joinedAt : Date.now(),
         updatedAt: Date.now()
       };
       remotePlayersMap[record.id] = record;
@@ -1305,30 +1399,41 @@
       if (adminPlayerCount) {
         adminPlayerCount.textContent = list.length.toLocaleString();
       }
+      if (adminListCount) {
+        adminListCount.textContent = list.length.toLocaleString();
+      }
 
       adminLeaderboard.innerHTML = '';
 
       if (list.length === 0) {
-        adminLeaderboard.innerHTML = '<li style="text-align:center; color:#94A3B8; padding:18px;">ยังไม่มีรายชื่อผู้เข้าแข่งขันที่สแกนเข้ามา</li>';
+        adminLeaderboard.innerHTML = '<li style="text-align:center; color:#94A3B8; padding:28px;">ยังไม่มีรายชื่อผู้เข้าแข่งขันที่สแกนเข้ามา (เมื่อผู้เล่นลงทะเบียน รายชื่อทั้งหมดจะแสดงที่นี่ทันที)</li>';
         return;
       }
 
       list.forEach((item, index) => {
         const li = document.createElement('li');
-        li.className = 'leaderboard-item' + (index === 0 && item.score > 0 ? ' rank-top-1' : '');
+        li.className = 'leaderboard-item' + (isScoreRevealed && index === 0 && item.score > 0 ? ' rank-top-1' : '');
 
         let rankClass = '';
         let medal = index + 1;
-        if (index === 0) { rankClass = 'rank-1'; medal = '🥇'; }
-        else if (index === 1) { rankClass = 'rank-2'; medal = '🥈'; }
-        else if (index === 2) { rankClass = 'rank-3'; medal = '🥉'; }
+        if (isScoreRevealed) {
+          if (index === 0) { rankClass = 'rank-1'; medal = '🥇'; }
+          else if (index === 1) { rankClass = 'rank-2'; medal = '🥈'; }
+          else if (index === 2) { rankClass = 'rank-3'; medal = '🥉'; }
+        }
 
         let statusBadge = '';
         if (item.status === 'playing') {
           statusBadge = '<span class="status-playing">กำลังกดสดๆ ⚡</span>';
         } else if (item.status === 'ready') {
           statusBadge = '<span class="status-ready">พร้อมแข่ง ✅</span>';
+        } else if (item.status === 'finished') {
+          statusBadge = '<span class="status-finished">ส่งคะแนนแล้ว 🏁</span>';
         }
+
+        const scoreHtml = isScoreRevealed
+          ? `<div class="player-score">${item.score.toLocaleString()} ครั้ง</div>`
+          : `<div class="player-score"><span class="score-masked">🔒 รอโชว์คะแนน</span></div>`;
 
         li.innerHTML = `
           <div class="player-info">
@@ -1336,7 +1441,7 @@
             <span class="player-name">${escapeHtml(item.name)}</span>
             ${statusBadge}
           </div>
-          <div class="player-score">${item.score.toLocaleString()} ครั้ง</div>
+          ${scoreHtml}
         `;
         adminLeaderboard.appendChild(li);
       });
@@ -1367,13 +1472,12 @@
     function updateScoreVisibilityUI() {
       if (isScoreRevealed) {
         scoreHiddenNotice.style.display = 'none';
-        adminLeaderboard.style.display = 'block';
-        adminRevealScoreBtn.textContent = '🙈 ซ่อนตารางคะแนน';
+        adminRevealScoreBtn.textContent = '🙈 ซ่อนตัวเลขคะแนน';
       } else {
         scoreHiddenNotice.style.display = 'block';
-        adminLeaderboard.style.display = 'none';
         adminRevealScoreBtn.textContent = '🏆 กดโชว์คะแนน & ประกาศผล!';
       }
+      renderAdminLeaderboard();
     }
 
     // ==========================================
@@ -1580,12 +1684,8 @@
       updateScoreVisibilityUI();
       if (isScoreRevealed) {
         renderAdminLeaderboard();
-        playApplauseAndWhistleSound();
+        playCheerAndApplauseSound();
       }
-    });
-
-    adminCheerSoundBtn.addEventListener('click', () => {
-      playApplauseAndWhistleSound();
     });
 
     copyLinkBtn.addEventListener('click', () => {
